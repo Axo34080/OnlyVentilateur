@@ -5,8 +5,8 @@ export interface Creator {
   avatar: string
   coverImage: string
   bio: string
-  subscriberCount: number
-  postCount: number
+  subscriberCount?: number
+  postCount?: number
   subscriptionPrice: number
   isPremium: boolean
 }
