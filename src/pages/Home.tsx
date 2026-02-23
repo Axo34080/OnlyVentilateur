@@ -30,7 +30,7 @@ function Home() {
         <div className="flex gap-3">
           {!isAuthenticated && (
             <Link
-              to="/login"
+              to="/signup"
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
             >
               Rejoindre

@@ -4,6 +4,7 @@ import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
 import Login from './pages/Login'
+import Signup from './pages/Signup'
 import Creators from './pages/Creators'
 import Subscribe from './pages/Subscribe'
 import Feed from './Views/Feed'
@@ -21,6 +22,7 @@ function App() {
               {/* Routes publiques */}
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
               <Route path="/creators" element={<Creators />} />
               <Route path="/creators/:id" element={<CreatorProfile />} />
 
