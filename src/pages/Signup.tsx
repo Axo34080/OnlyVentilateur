@@ -12,7 +12,7 @@ function Signup() {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  if (isAuthenticated) return <Navigate to="/" replace />
+  if (isAuthenticated) return <Navigate to="/feed" replace />
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -20,7 +20,7 @@ function Signup() {
     setIsLoading(true)
     try {
       await signup(email, username, password)
-      navigate("/")
+      navigate("/feed")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue")
     } finally {

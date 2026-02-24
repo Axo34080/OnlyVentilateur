@@ -1,17 +1,23 @@
+import { useNavigate } from "react-router-dom"
 import PremiumBlur from "./PremiumBlur"
 import type { Post } from "../types/Post"
 
 interface Props {
   post: Post
   isSubscribed?: boolean
+  isLiked?: boolean
   onLike?: (postId: string) => void
 }
 
-function PostCard({ post, isSubscribed = false, onLike }: Props) {
+function PostCard({ post, isSubscribed = false, isLiked = false, onLike }: Props) {
   const locked = post.isLocked && !isSubscribed
+  const navigate = useNavigate()
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div
+      className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+      onClick={() => navigate(`/posts/${post.id}`)}
+    >
 
       {/* Image */}
       <PremiumBlur isLocked={locked}>
@@ -48,10 +54,12 @@ function PostCard({ post, isSubscribed = false, onLike }: Props) {
         {/* Footer : likes + prix */}
         <div className="flex items-center justify-between pt-1">
           <button
-            onClick={() => onLike?.(post.id)}
-            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-red-500 transition-colors"
+            onClick={(e) => { e.stopPropagation(); onLike?.(post.id) }}
+            className={`flex items-center gap-1.5 text-sm transition-colors ${
+              isLiked ? "text-red-500" : "text-slate-400 hover:text-red-500"
+            }`}
           >
-            <span>❤️</span>
+            <span>{isLiked ? "❤️" : "🤍"}</span>
             <span>{post.likes.toLocaleString("fr-FR")}</span>
           </button>
 

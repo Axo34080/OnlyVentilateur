@@ -1,10 +1,11 @@
 import { useRef } from "react"
+import { Link } from "react-router-dom"
 import { useUserProfileViewModel } from "../ViewModels/useUserProfileViewModel"
 
 function UserProfile() {
   const {
-    user, form, isEditing, isSaving, error,
-    handleEdit, handleCancel, handleSave, handleChange, handleAvatarChange,
+    user, form, isEditing, isSaving, error, subscriptions,
+    handleEdit, handleCancel, handleSave, handleChange, handleAvatarChange, handleUnsubscribe,
   } = useUserProfileViewModel()
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -130,11 +131,36 @@ function UserProfile() {
 
       {/* Abonnements */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6">
-        <h2 className="font-bold text-slate-900 mb-3">Mes abonnements</h2>
-        {user.subscribedTo.length === 0 ? (
+        <h2 className="font-bold text-slate-900 mb-4">Mes abonnements</h2>
+        {subscriptions.length === 0 ? (
           <p className="text-sm text-slate-400">Tu n'es abonné à aucun créateur pour l'instant.</p>
         ) : (
-          <p className="text-sm text-slate-600">{user.subscribedTo.length} abonnement(s)</p>
+          <div className="flex flex-col gap-3">
+            {subscriptions.map((creator) => (
+              <div key={creator.id} className="flex items-center justify-between gap-3">
+                <Link
+                  to={`/creators/${creator.id}`}
+                  className="flex items-center gap-3 hover:opacity-80 transition-opacity min-w-0"
+                >
+                  <img
+                    src={creator.avatar}
+                    alt={creator.displayName}
+                    className="w-10 h-10 rounded-full object-cover shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <div className="font-semibold text-slate-900 text-sm truncate">{creator.displayName}</div>
+                    <div className="text-xs text-slate-400 truncate">{creator.username}</div>
+                  </div>
+                </Link>
+                <button
+                  onClick={() => handleUnsubscribe(creator.id)}
+                  className="text-xs text-slate-500 hover:text-red-500 transition-colors shrink-0 border border-slate-200 hover:border-red-200 px-3 py-1.5 rounded-lg"
+                >
+                  Se désabonner
+                </button>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 

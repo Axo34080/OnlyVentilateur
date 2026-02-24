@@ -7,7 +7,10 @@ interface Props {
 
 function CreatorCard({ creator }: Props) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+    <Link
+      to={`/creators/${creator.id}`}
+      className="block bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+    >
 
       {/* Cover */}
       <div className="h-24 bg-slate-100 overflow-hidden">
@@ -56,21 +59,16 @@ function CreatorCard({ creator }: Props) {
           </span>
         </div>
 
-        {/* Prix + CTA */}
+        {/* Prix */}
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-blue-600">
             {creator.subscriptionPrice.toFixed(2)} €<span className="font-normal text-slate-400">/mois</span>
           </span>
-          <Link
-            to={`/creators/${creator.id}`}
-            className="text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-1.5 rounded-lg transition-colors"
-          >
-            Voir le profil
-          </Link>
+          <span className="text-sm text-blue-600 font-medium">Voir le profil →</span>
         </div>
       </div>
 
-    </div>
+    </Link>
   )
 }
 

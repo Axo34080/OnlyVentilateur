@@ -1,5 +1,7 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "../context/AuthContext"
+import { getSubscribedCreators, unsubscribe } from "../services/subscriptionService"
+import type { Creator } from "../types/Creator"
 
 interface ProfileForm {
   username: string
@@ -13,11 +15,13 @@ interface UserProfileViewModel {
   isEditing: boolean
   isSaving: boolean
   error: string | null
+  subscriptions: Creator[]
   handleEdit: () => void
   handleCancel: () => void
   handleSave: () => Promise<void>
   handleChange: (field: Exclude<keyof ProfileForm, "avatar">, value: string) => void
   handleAvatarChange: (file: File) => void
+  handleUnsubscribe: (creatorId: string) => Promise<void>
 }
 
 export function useUserProfileViewModel(): UserProfileViewModel {
@@ -26,11 +30,29 @@ export function useUserProfileViewModel(): UserProfileViewModel {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [subscriptions, setSubscriptions] = useState<Creator[]>([])
   const [form, setForm] = useState<ProfileForm>({
     username: user?.username ?? "",
     bio: user?.bio ?? "",
     avatar: user?.avatar ?? "",
   })
+
+  useEffect(() => {
+    if (!token) return
+    getSubscribedCreators(token)
+      .then(setSubscriptions)
+      .catch(() => {})
+  }, [token])
+
+  const handleUnsubscribe = async (creatorId: string) => {
+    if (!token) return
+    try {
+      await unsubscribe(creatorId, token)
+      setSubscriptions((prev) => prev.filter((c) => c.id !== creatorId))
+    } catch {
+      // silently fail
+    }
+  }
 
   const handleEdit = () => {
     setForm({
@@ -63,7 +85,10 @@ export function useUserProfileViewModel(): UserProfileViewModel {
           avatar: form.avatar || undefined,
         }),
       })
-      if (!res.ok) throw new Error()
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.message ?? "Erreur lors de la sauvegarde")
+      }
       const updated = await res.json()
       updateUser({
         username: updated.username,
@@ -71,8 +96,8 @@ export function useUserProfileViewModel(): UserProfileViewModel {
         avatar: updated.avatar,
       })
       setIsEditing(false)
-    } catch {
-      setError("Erreur lors de la sauvegarde")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur lors de la sauvegarde")
     } finally {
       setIsSaving(false)
     }
@@ -93,5 +118,5 @@ export function useUserProfileViewModel(): UserProfileViewModel {
     reader.readAsDataURL(file)
   }
 
-  return { user, form, isEditing, isSaving, error, handleEdit, handleCancel, handleSave, handleChange, handleAvatarChange }
+  return { user, form, isEditing, isSaving, error, subscriptions, handleEdit, handleCancel, handleSave, handleChange, handleAvatarChange, handleUnsubscribe }
 }
