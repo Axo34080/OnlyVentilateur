@@ -9,12 +9,23 @@ interface ProfileForm {
   avatar: string
 }
 
+interface CreatorForm {
+  displayName: string
+  coverImage: string
+  subscriptionPrice: string
+}
+
 interface UserProfileViewModel {
   user: ReturnType<typeof useAuth>["user"]
   form: ProfileForm
+  creatorForm: CreatorForm
+  creatorData: Creator | null
   isEditing: boolean
+  isEditingCreator: boolean
   isSaving: boolean
+  isSavingCreator: boolean
   error: string | null
+  creatorError: string | null
   subscriptions: Creator[]
   handleEdit: () => void
   handleCancel: () => void
@@ -22,6 +33,10 @@ interface UserProfileViewModel {
   handleChange: (field: Exclude<keyof ProfileForm, "avatar">, value: string) => void
   handleAvatarChange: (file: File) => void
   handleUnsubscribe: (creatorId: string) => Promise<void>
+  handleEditCreator: () => void
+  handleCancelCreator: () => void
+  handleSaveCreator: () => Promise<void>
+  handleCreatorChange: (field: keyof CreatorForm, value: string) => void
 }
 
 export function useUserProfileViewModel(): UserProfileViewModel {
@@ -37,12 +52,39 @@ export function useUserProfileViewModel(): UserProfileViewModel {
     avatar: user?.avatar ?? "",
   })
 
+  // État créateur
+  const [creatorData, setCreatorData] = useState<Creator | null>(null)
+  const [isEditingCreator, setIsEditingCreator] = useState(false)
+  const [isSavingCreator, setIsSavingCreator] = useState(false)
+  const [creatorError, setCreatorError] = useState<string | null>(null)
+  const [creatorForm, setCreatorForm] = useState<CreatorForm>({
+    displayName: "",
+    coverImage: "",
+    subscriptionPrice: "",
+  })
+
   useEffect(() => {
     if (!token) return
     getSubscribedCreators(token)
       .then(setSubscriptions)
       .catch(() => {})
   }, [token])
+
+  // Charger le profil créateur si l'utilisateur en est un
+  useEffect(() => {
+    if (!token || !user?.creatorId) return
+    fetch("/api/creators/me", { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((data) => {
+        setCreatorData(data)
+        setCreatorForm({
+          displayName: data.displayName ?? "",
+          coverImage: data.coverImage ?? "",
+          subscriptionPrice: String(data.subscriptionPrice ?? ""),
+        })
+      })
+      .catch(() => {})
+  }, [token, user?.creatorId])
 
   const handleUnsubscribe = async (creatorId: string) => {
     if (!token) return
@@ -90,11 +132,11 @@ export function useUserProfileViewModel(): UserProfileViewModel {
         throw new Error(body.message ?? "Erreur lors de la sauvegarde")
       }
       const updated = await res.json()
-      updateUser({
-        username: updated.username,
-        bio: updated.bio,
-        avatar: updated.avatar,
-      })
+      updateUser({ username: updated.username, bio: updated.bio, avatar: updated.avatar })
+      // Mettre à jour les données créateur localement (avatar/bio syncés)
+      if (creatorData) {
+        setCreatorData((prev) => prev ? { ...prev, avatar: updated.avatar ?? prev.avatar, bio: updated.bio ?? prev.bio } : prev)
+      }
       setIsEditing(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur lors de la sauvegarde")
@@ -118,5 +160,63 @@ export function useUserProfileViewModel(): UserProfileViewModel {
     reader.readAsDataURL(file)
   }
 
-  return { user, form, isEditing, isSaving, error, subscriptions, handleEdit, handleCancel, handleSave, handleChange, handleAvatarChange, handleUnsubscribe }
+  // Créateur
+  const handleEditCreator = () => {
+    setCreatorForm({
+      displayName: creatorData?.displayName ?? "",
+      coverImage: creatorData?.coverImage ?? "",
+      subscriptionPrice: String(creatorData?.subscriptionPrice ?? ""),
+    })
+    setIsEditingCreator(true)
+    setCreatorError(null)
+  }
+
+  const handleCancelCreator = () => {
+    setIsEditingCreator(false)
+    setCreatorError(null)
+  }
+
+  const handleSaveCreator = async () => {
+    setIsSavingCreator(true)
+    setCreatorError(null)
+    try {
+      const res = await fetch("/api/creators/me", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          displayName: creatorForm.displayName || undefined,
+          coverImage: creatorForm.coverImage || undefined,
+          subscriptionPrice: creatorForm.subscriptionPrice
+            ? parseFloat(creatorForm.subscriptionPrice)
+            : undefined,
+        }),
+      })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.message ?? "Erreur lors de la sauvegarde")
+      }
+      const updated = await res.json()
+      setCreatorData((prev) => prev ? { ...prev, ...updated } : updated)
+      setIsEditingCreator(false)
+    } catch (err) {
+      setCreatorError(err instanceof Error ? err.message : "Erreur lors de la sauvegarde")
+    } finally {
+      setIsSavingCreator(false)
+    }
+  }
+
+  const handleCreatorChange = (field: keyof CreatorForm, value: string) => {
+    setCreatorForm((prev) => ({ ...prev, [field]: value }))
+  }
+
+  return {
+    user, form, creatorForm, creatorData,
+    isEditing, isEditingCreator, isSaving, isSavingCreator,
+    error, creatorError, subscriptions,
+    handleEdit, handleCancel, handleSave, handleChange, handleAvatarChange, handleUnsubscribe,
+    handleEditCreator, handleCancelCreator, handleSaveCreator, handleCreatorChange,
+  }
 }

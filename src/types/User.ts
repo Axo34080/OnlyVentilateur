@@ -5,4 +5,5 @@ export interface User {
   avatar?: string
   bio?: string
   subscribedTo: string[]
+  creatorId?: string
 }

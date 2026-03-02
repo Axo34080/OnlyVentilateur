@@ -447,13 +447,18 @@ OnlyVentilateurBack/src/
 - [x] Body parser NestJS : limite 10 mb (fix 413 sur upload avatar base64)
 - [x] Unicité username à la mise à jour profil — `ConflictException` backend + message affiché frontend
 
-### Phase 6 — Espace créateur (à faire)
+### Phase 6 — Espace créateur
 
-- [ ] Mode créateur : page "Devenir créateur" (`/become-creator`) + `POST /api/creators`
-- [ ] Dashboard créateur (`/dashboard`) : stats abonnés, revenus estimés, liste des posts
-- [ ] Création de post (`/dashboard/new-post`) : titre, description, image, tags, isLocked, prix
-- [ ] Édition / suppression de post
-- [ ] CartContext pour le flux paiement simulé
+- [x] Mode créateur : page "Devenir créateur" (`/become-creator`) + `POST /api/creators` — formulaire displayName, bio, prix abonnement
+- [x] Dashboard créateur (`/dashboard`) : stats (posts, abonnés, prix abonnement, posts premium), liste des posts avec édition/suppression
+- [x] Création de post (`/dashboard/new-post`) : titre, description, image (URL + aperçu), tags, isLocked, prix unitaire
+- [x] Édition de post (`/dashboard/edit-post/:id`) — même formulaire `NewPost.tsx` en mode édition
+- [x] Suppression de post depuis le dashboard (avec confirmation `confirm()`)
+- [x] **Boutique goodies** (`/shop`) + `CartContext` : 8 goodies mockés, filtre par créateur, panier latéral sticky avec gestion des quantités, checkout simulé
+- [x] `CartContext` global (add, remove, updateQuantity, clearCart, totalItems, totalPrice) branché dans `App.tsx`
+- [x] Navbar : liens Boutique, Dashboard (si créateur) / Devenir créateur (sinon), badge panier avec compteur
+- [x] `User.creatorId` ajouté dans le type — détecte automatiquement si l'utilisateur est créateur
+- [x] Nouveaux endpoints frontend attendus côté NestJS : `GET /api/posts/mine`, `POST /api/posts`, `PATCH /api/posts/:id`, `DELETE /api/posts/:id`, `POST /api/creators`
 
 ### Phase 7 — Bonus cours
 
@@ -475,5 +480,5 @@ OnlyVentilateurBack/src/
 | Sécurisé             | ✅ Fait | JWT sessionStorage, bcrypt, `ProtectedRoute`, `JwtAuthGuard`        |
 | MVVM                 | ✅ Fait | `CreatorProfile` + `Feed` + `UserProfile` avec ViewModels           |
 | Custom hooks         | ✅ Fait | `useFeedViewModel`, `useCreatorProfileViewModel`, `useUserProfileViewModel` |
-| Context API          | ✅ Fait | `AuthContext`                                                       |
+| Context API          | ✅ AuthContext · ⏳ CartContext (Phase 6 — boutique goodies) | `context/AuthContext.tsx`                          |
 | React Router         | ✅ Fait | 10 routes (6 publiques + 4 protégées via `ProtectedRoute`)          |

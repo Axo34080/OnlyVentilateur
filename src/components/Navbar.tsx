@@ -1,8 +1,15 @@
 import { Link, NavLink } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
+import { useCart } from "../context/CartContext"
 
 function Navbar() {
   const { user, isAuthenticated, logout } = useAuth()
+  const { totalItems } = useCart()
+
+  const navLink = ({ isActive }: { isActive: boolean }) =>
+    `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+      isActive ? "bg-slate-100 text-slate-900" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+    }`
 
   return (
     <nav className="bg-white border-b border-slate-200 sticky top-0 z-10">
@@ -15,38 +22,35 @@ function Navbar() {
 
         {/* Liens + actions */}
         <div className="flex items-center gap-1">
-          <NavLink
-            to="/creators"
-            className={({ isActive }) =>
-              `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive ? "bg-slate-100 text-slate-900" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
-              }`
-            }
-          >
-            Créateurs
-          </NavLink>
+          <NavLink to="/creators" className={navLink}>Créateurs</NavLink>
+          <NavLink to="/shop" className={navLink}>Boutique</NavLink>
+
           {isAuthenticated && user ? (
             <div className="flex items-center gap-2 ml-2">
+              <NavLink to="/feed" className={navLink}>Fil</NavLink>
+              <NavLink to="/subscriptions" className={navLink}>Abonnements</NavLink>
+
+              {/* Lien Dashboard si créateur */}
+              {user.creatorId ? (
+                <NavLink to="/dashboard" className={navLink}>Dashboard</NavLink>
+              ) : (
+                <NavLink to="/become-creator" className={navLink}>Devenir créateur</NavLink>
+              )}
+
+              {/* Icône panier */}
               <NavLink
-                to="/feed"
-                className={({ isActive }) =>
-                  `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    isActive ? "bg-slate-100 text-slate-900" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
-                  }`
-                }
+                to="/shop"
+                className="relative px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors text-slate-500 hover:text-slate-900"
+                title="Panier"
               >
-                Fil
+                🛒
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                    {totalItems > 9 ? "9+" : totalItems}
+                  </span>
+                )}
               </NavLink>
-              <NavLink
-                to="/subscriptions"
-                className={({ isActive }) =>
-                  `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    isActive ? "bg-slate-100 text-slate-900" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
-                  }`
-                }
-              >
-                Abonnements
-              </NavLink>
+
               <NavLink
                 to="/profile"
                 className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors"
