@@ -14,6 +14,7 @@ import NotFound from './pages/NotFound'
 import Feed from './Views/Feed'
 import CreatorProfile from './Views/CreatorProfile'
 import UserProfile from './Views/UserProfile'
+import UserPublicProfile from './Views/UserPublicProfile'
 import BecomeCreator from './Views/BecomeCreator'
 import Dashboard from './Views/Dashboard'
 import NewPost from './Views/NewPost'
@@ -36,10 +37,12 @@ function App() {
                 <Route path="/creators/:id" element={<CreatorProfile />} />
                 <Route path="/posts/:id" element={<PostDetail />} />
                 <Route path="/shop" element={<Shop />} />
+                <Route path="/users/:id" element={<UserPublicProfile />} />
 
                 {/* Routes protégées */}
                 <Route path="/feed" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+                <Route path="/profile/edit" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
                 <Route path="/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
                 <Route path="/subscribe/:creatorId" element={<ProtectedRoute><Subscribe /></ProtectedRoute>} />
 

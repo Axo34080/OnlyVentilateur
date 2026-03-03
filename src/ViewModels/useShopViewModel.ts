@@ -1,7 +1,7 @@
-import { useState } from "react"
-import { mockGoodies } from "../data/mockGoodies"
+import { useState, useEffect } from "react"
 import { useCart } from "../context/CartContext"
 import type { GoodieItem } from "../context/CartContext"
+import { getGoodies, goodieToCartItem } from "../services/goodiesService"
 
 interface ShopViewModel {
   goodies: GoodieItem[]
@@ -9,6 +9,7 @@ interface ShopViewModel {
   creators: string[]
   filteredGoodies: GoodieItem[]
   addedId: string | null
+  isLoading: boolean
   isCheckingOut: boolean
   checkoutSuccess: boolean
   handleFilter: (creator: string) => void
@@ -22,11 +23,21 @@ export function useShopViewModel(): ShopViewModel {
   const [addedId, setAddedId] = useState<string | null>(null)
   const [isCheckingOut, setIsCheckingOut] = useState(false)
   const [checkoutSuccess, setCheckoutSuccess] = useState(false)
+  const [goodies, setGoodies] = useState<GoodieItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const creators = ["Tous", ...Array.from(new Set(mockGoodies.map((g) => g.creator)))]
+  useEffect(() => {
+    setIsLoading(true)
+    getGoodies()
+      .then((data) => setGoodies(data.map(goodieToCartItem)))
+      .catch(() => {})
+      .finally(() => setIsLoading(false))
+  }, [])
+
+  const creators = ["Tous", ...Array.from(new Set(goodies.map((g) => g.creator).filter(Boolean)))]
 
   const filteredGoodies =
-    filter === "Tous" ? mockGoodies : mockGoodies.filter((g) => g.creator === filter)
+    filter === "Tous" ? goodies : goodies.filter((g) => g.creator === filter)
 
   const handleFilter = (creator: string) => setFilter(creator)
 
@@ -39,7 +50,6 @@ export function useShopViewModel(): ShopViewModel {
   const handleCheckout = () => {
     if (items.length === 0) return
     setIsCheckingOut(true)
-    // Simulation d'un checkout (délai 1.5s)
     setTimeout(() => {
       clearCart()
       setIsCheckingOut(false)
@@ -47,15 +57,15 @@ export function useShopViewModel(): ShopViewModel {
     }, 1500)
   }
 
-  // Expose totalPrice via le cart pour les composants
   void totalPrice
 
   return {
-    goodies: mockGoodies,
+    goodies,
     filter,
     creators,
     filteredGoodies,
     addedId,
+    isLoading,
     isCheckingOut,
     checkoutSuccess,
     handleFilter,

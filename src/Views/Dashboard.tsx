@@ -1,13 +1,18 @@
 import { Link, useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { useDashboardViewModel } from "../ViewModels/useDashboardViewModel"
+import type { Goodie } from "../services/goodiesService"
 
 function Dashboard() {
   const { user } = useAuth()
-  const { creator, posts, isLoading, error, handleDeletePost } = useDashboardViewModel()
+  const {
+    creator, posts, isLoading, error, handleDeletePost,
+    goodies, goodiesLoading, goodieForm, editingGoodieId, isSavingGoodie,
+    handleGoodieFormChange, handleEditGoodie, handleCancelGoodie,
+    handleSaveGoodie, handleDeleteGoodie, handleNewGoodie,
+  } = useDashboardViewModel()
   const navigate = useNavigate()
 
-  // Redirige si l'utilisateur n'est pas créateur
   if (!user?.creatorId) {
     return (
       <div className="max-w-lg mx-auto text-center flex flex-col gap-4 mt-12">
@@ -39,6 +44,8 @@ function Dashboard() {
   const revenue = posts
     .filter((p) => p.isLocked && p.price)
     .reduce((sum, p) => sum + (p.price ?? 0), 0)
+
+  const isFormOpen = editingGoodieId !== null || goodieForm.name !== "" || goodieForm.image !== ""
 
   return (
     <div className="flex flex-col gap-6">
@@ -122,6 +129,146 @@ function Dashboard() {
                   <button
                     onClick={() => {
                       if (confirm("Supprimer ce post ?")) handleDeletePost(post.id)
+                    }}
+                    className="text-xs text-slate-500 hover:text-red-600 border border-slate-200 hover:border-red-200 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    Supprimer
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Ma boutique */}
+      <div className="bg-white rounded-2xl border border-slate-200">
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+          <h2 className="font-bold text-slate-900">Ma boutique</h2>
+          <button
+            onClick={handleNewGoodie}
+            className="text-xs text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-400 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            + Ajouter un goodie
+          </button>
+        </div>
+
+        {/* Formulaire ajout / édition */}
+        {isFormOpen && (
+          <div className="px-6 py-5 border-b border-slate-100 bg-slate-50">
+            <h3 className="font-semibold text-slate-900 text-sm mb-4">
+              {editingGoodieId ? "Modifier le goodie" : "Nouveau goodie"}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-slate-600">Nom *</label>
+                <input
+                  type="text"
+                  value={goodieForm.name}
+                  onChange={(e) => handleGoodieFormChange("name", e.target.value)}
+                  placeholder="Ex : T-shirt TurboFan"
+                  className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-slate-600">Prix (€) *</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={goodieForm.price}
+                  onChange={(e) => handleGoodieFormChange("price", e.target.value)}
+                  placeholder="19.99"
+                  className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                />
+              </div>
+              <div className="flex flex-col gap-1 md:col-span-2">
+                <label className="text-xs font-medium text-slate-600">Description</label>
+                <input
+                  type="text"
+                  value={goodieForm.description}
+                  onChange={(e) => handleGoodieFormChange("description", e.target.value)}
+                  placeholder="Description courte"
+                  className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                />
+              </div>
+              <div className="flex flex-col gap-1 md:col-span-2">
+                <label className="text-xs font-medium text-slate-600">URL image *</label>
+                <input
+                  type="text"
+                  value={goodieForm.image}
+                  onChange={(e) => handleGoodieFormChange("image", e.target.value)}
+                  placeholder="https://..."
+                  className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="inStock"
+                  checked={goodieForm.inStock}
+                  onChange={(e) => handleGoodieFormChange("inStock", e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-300 text-blue-600"
+                />
+                <label htmlFor="inStock" className="text-sm text-slate-700">En stock</label>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 mt-4">
+              <button
+                onClick={handleSaveGoodie}
+                disabled={isSavingGoodie || !goodieForm.name || !goodieForm.price || !goodieForm.image}
+                className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors"
+              >
+                {isSavingGoodie ? "Enregistrement..." : editingGoodieId ? "Mettre à jour" : "Créer"}
+              </button>
+              <button
+                onClick={handleCancelGoodie}
+                className="text-sm text-slate-500 hover:text-slate-700"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Liste des goodies */}
+        {goodiesLoading ? (
+          <div className="px-6 py-8 text-center text-slate-400 text-sm">Chargement...</div>
+        ) : goodies.length === 0 ? (
+          <div className="px-6 py-12 text-center">
+            <p className="text-slate-400 text-sm">Tu n'as pas encore de goodies dans ta boutique.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {goodies.map((goodie: Goodie) => (
+              <div key={goodie.id} className="px-6 py-4 flex items-center gap-4">
+                <img
+                  src={goodie.image}
+                  alt={goodie.name}
+                  className="w-14 h-14 rounded-lg object-cover shrink-0 bg-slate-100"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-slate-900 text-sm truncate">{goodie.name}</span>
+                    {!goodie.inStock && (
+                      <span className="shrink-0 text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">Rupture</span>
+                    )}
+                  </div>
+                  {goodie.description && (
+                    <p className="text-xs text-slate-400 truncate mt-0.5">{goodie.description}</p>
+                  )}
+                  <p className="text-sm font-bold text-slate-800 mt-0.5">{Number(goodie.price).toFixed(2)} €</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => handleEditGoodie(goodie)}
+                    className="text-xs text-slate-500 hover:text-blue-600 border border-slate-200 hover:border-blue-200 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    Éditer
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm("Supprimer ce goodie ?")) handleDeleteGoodie(goodie.id)
                     }}
                     className="text-xs text-slate-500 hover:text-red-600 border border-slate-200 hover:border-red-200 px-3 py-1.5 rounded-lg transition-colors"
                   >

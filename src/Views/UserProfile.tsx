@@ -1,8 +1,9 @@
 import { useRef } from "react"
-import { Link } from "react-router-dom"
+import { Link, Navigate, useLocation } from "react-router-dom"
 import { useUserProfileViewModel } from "../ViewModels/useUserProfileViewModel"
 
 function UserProfile() {
+  const location = useLocation()
   const {
     user, form, creatorForm, creatorData,
     isEditing, isEditingCreator, isSaving, isSavingCreator,
@@ -10,6 +11,11 @@ function UserProfile() {
     handleEdit, handleCancel, handleSave, handleChange, handleAvatarChange, handleUnsubscribe,
     handleEditCreator, handleCancelCreator, handleSaveCreator, handleCreatorChange,
   } = useUserProfileViewModel()
+
+  // /profile → redirige vers la page créateur. /profile/edit → formulaire d'édition
+  if (user?.creatorId && location.pathname === "/profile") {
+    return <Navigate to={`/creators/${user.creatorId}`} replace />
+  }
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 

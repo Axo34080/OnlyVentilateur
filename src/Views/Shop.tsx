@@ -3,7 +3,7 @@ import { useCart } from "../context/CartContext"
 
 function Shop() {
   const {
-    filter, creators, filteredGoodies, addedId, isCheckingOut, checkoutSuccess,
+    filter, creators, filteredGoodies, addedId, isLoading, isCheckingOut, checkoutSuccess,
     handleFilter, handleAddToCart, handleCheckout,
   } = useShopViewModel()
   const { items, totalItems, totalPrice, removeItem, updateQuantity } = useCart()
@@ -51,6 +51,9 @@ function Shop() {
           </div>
 
           {/* Grille produits */}
+          {isLoading ? (
+            <div className="text-center py-12 text-slate-400">Chargement des goodies...</div>
+          ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filteredGoodies.map((goodie) => {
               const inCart = items.find((i) => i.id === goodie.id)
@@ -91,6 +94,7 @@ function Shop() {
               )
             })}
           </div>
+          )}
         </div>
 
         {/* Panier */}

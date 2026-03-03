@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { createPost, updatePost, getMyPosts } from "../services/postService"
+import { uploadFile } from "../services/uploadService"
 
 interface PostForm {
   title: string
@@ -16,8 +17,10 @@ interface NewPostViewModel {
   form: PostForm
   isEditing: boolean
   isSubmitting: boolean
+  isUploadingImage: boolean
   error: string | null
   handleChange: (field: keyof PostForm, value: string | boolean) => void
+  handleImageFileChange: (file: File) => Promise<void>
   handleSubmit: () => Promise<void>
 }
 
@@ -36,6 +39,7 @@ export function useNewPostViewModel(): NewPostViewModel {
     tags: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // En mode édition, charger les données du post existant
@@ -62,13 +66,27 @@ export function useNewPostViewModel(): NewPostViewModel {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
+  const handleImageFileChange = async (file: File) => {
+    if (!token) return
+    setIsUploadingImage(true)
+    setError(null)
+    try {
+      const url = await uploadFile(file, token)
+      setForm((prev) => ({ ...prev, image: url }))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur lors du téléversement")
+    } finally {
+      setIsUploadingImage(false)
+    }
+  }
+
   const handleSubmit = async () => {
     if (!form.title.trim()) {
       setError("Le titre est requis")
       return
     }
     if (!form.image.trim()) {
-      setError("L'URL de l'image est requise")
+      setError("L'image est requise")
       return
     }
 
@@ -100,5 +118,5 @@ export function useNewPostViewModel(): NewPostViewModel {
     }
   }
 
-  return { form, isEditing, isSubmitting, error, handleChange, handleSubmit }
+  return { form, isEditing, isSubmitting, isUploadingImage, error, handleChange, handleImageFileChange, handleSubmit }
 }

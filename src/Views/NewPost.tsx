@@ -1,9 +1,11 @@
+import { useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { useNewPostViewModel } from "../ViewModels/useNewPostViewModel"
 
 function NewPost() {
-  const { form, isEditing, isSubmitting, error, handleChange, handleSubmit } = useNewPostViewModel()
+  const { form, isEditing, isSubmitting, isUploadingImage, error, handleChange, handleImageFileChange, handleSubmit } = useNewPostViewModel()
   const navigate = useNavigate()
+  const imageInputRef = useRef<HTMLInputElement>(null)
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-6">
@@ -46,8 +48,36 @@ function NewPost() {
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">
-            URL de l'image <span className="text-red-500">*</span>
+            Image <span className="text-red-500">*</span>
           </label>
+
+          {/* File picker */}
+          <button
+            type="button"
+            onClick={() => imageInputRef.current?.click()}
+            disabled={isUploadingImage}
+            className="w-full px-4 py-2.5 rounded-lg border-2 border-dashed border-slate-300 hover:border-blue-400 text-slate-500 hover:text-blue-500 text-sm transition-colors disabled:opacity-50"
+          >
+            {isUploadingImage ? "Téléversement..." : "Choisir un fichier image"}
+          </button>
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) handleImageFileChange(file)
+              e.target.value = ""
+            }}
+          />
+
+          {/* URL fallback */}
+          <div className="flex items-center gap-2 my-2">
+            <div className="flex-1 h-px bg-slate-200" />
+            <span className="text-xs text-slate-400">ou URL</span>
+            <div className="flex-1 h-px bg-slate-200" />
+          </div>
           <input
             type="url"
             value={form.image}
@@ -55,6 +85,7 @@ function NewPost() {
             placeholder="https://..."
             className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
           />
+
           {form.image && (
             <img
               src={form.image}
@@ -118,7 +149,7 @@ function NewPost() {
         <div className="flex gap-3 pt-1">
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting}
+            disabled={isSubmitting || isUploadingImage}
             className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-3 rounded-lg transition-colors"
           >
             {isSubmitting
