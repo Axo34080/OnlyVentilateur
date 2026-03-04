@@ -1,4 +1,5 @@
-import { Link, useNavigate } from "react-router-dom"
+import { useRef } from "react"
+import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { useDashboardViewModel } from "../ViewModels/useDashboardViewModel"
 import type { Goodie } from "../services/goodiesService"
@@ -7,27 +8,13 @@ function Dashboard() {
   const { user } = useAuth()
   const {
     creator, posts, isLoading, error, handleDeletePost,
-    goodies, goodiesLoading, goodieForm, editingGoodieId, isSavingGoodie,
+    goodies, goodiesLoading, goodieForm, editingGoodieId, newGoodieOpen, isSavingGoodie,
+    isUploadingGoodieImage, handleGoodieImageFile,
     handleGoodieFormChange, handleEditGoodie, handleCancelGoodie,
     handleSaveGoodie, handleDeleteGoodie, handleNewGoodie,
   } = useDashboardViewModel()
+  const goodieImageRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
-
-  if (!user?.creatorId) {
-    return (
-      <div className="max-w-lg mx-auto text-center flex flex-col gap-4 mt-12">
-        <div className="text-5xl">🌀</div>
-        <h1 className="text-xl font-bold text-slate-900">Tu n'es pas encore créateur</h1>
-        <p className="text-slate-500 text-sm">Crée ton espace créateur pour accéder au dashboard.</p>
-        <Link
-          to="/become-creator"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors"
-        >
-          Devenir créateur
-        </Link>
-      </div>
-    )
-  }
 
   if (isLoading) {
     return (
@@ -45,7 +32,7 @@ function Dashboard() {
     .filter((p) => p.isLocked && p.price)
     .reduce((sum, p) => sum + (p.price ?? 0), 0)
 
-  const isFormOpen = editingGoodieId !== null || goodieForm.name !== "" || goodieForm.image !== ""
+  const isFormOpen = editingGoodieId !== null || newGoodieOpen
 
   return (
     <div className="flex flex-col gap-6">
@@ -193,13 +180,35 @@ function Dashboard() {
                 />
               </div>
               <div className="flex flex-col gap-1 md:col-span-2">
-                <label className="text-xs font-medium text-slate-600">URL image *</label>
+                <label className="text-xs font-medium text-slate-600">Image *</label>
+                <div className="flex items-center gap-3">
+                  {goodieForm.image && (
+                    <img src={goodieForm.image} alt="preview" className="w-14 h-14 rounded-lg object-cover shrink-0 bg-slate-100" />
+                  )}
+                  <div className="flex flex-col gap-2 flex-1">
+                    <button
+                      type="button"
+                      onClick={() => goodieImageRef.current?.click()}
+                      disabled={isUploadingGoodieImage}
+                      className="border border-slate-200 hover:border-blue-300 rounded-lg px-3 py-2 text-sm text-slate-600 hover:text-blue-600 transition-colors text-left disabled:opacity-50"
+                    >
+                      {isUploadingGoodieImage ? "Téléversement..." : "Choisir un fichier"}
+                    </button>
+                    <input
+                      type="text"
+                      value={goodieForm.image}
+                      onChange={(e) => handleGoodieFormChange("image", e.target.value)}
+                      placeholder="ou coller une URL..."
+                      className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    />
+                  </div>
+                </div>
                 <input
-                  type="text"
-                  value={goodieForm.image}
-                  onChange={(e) => handleGoodieFormChange("image", e.target.value)}
-                  placeholder="https://..."
-                  className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  ref={goodieImageRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleGoodieImageFile(f); e.target.value = "" }}
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -216,7 +225,7 @@ function Dashboard() {
             <div className="flex items-center gap-3 mt-4">
               <button
                 onClick={handleSaveGoodie}
-                disabled={isSavingGoodie || !goodieForm.name || !goodieForm.price || !goodieForm.image}
+                disabled={isSavingGoodie || isUploadingGoodieImage || !goodieForm.name || !goodieForm.price || !goodieForm.image}
                 className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors"
               >
                 {isSavingGoodie ? "Enregistrement..." : editingGoodieId ? "Mettre à jour" : "Créer"}

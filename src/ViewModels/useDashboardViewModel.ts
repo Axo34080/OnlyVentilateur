@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "../context/AuthContext"
+import { useToast } from "../context/ToastContext"
 import { getMyPosts, deletePost } from "../services/postService"
 import { getCreatorById } from "../services/creatorsService"
 import { getGoodies, createGoodie, updateGoodie, deleteGoodie } from "../services/goodiesService"
+import { uploadFile } from "../services/uploadService"
 import type { Post } from "../types/Post"
 import type { Creator } from "../types/Creator"
 import type { Goodie } from "../services/goodiesService"
@@ -28,7 +30,10 @@ interface DashboardViewModel {
   goodiesLoading: boolean
   goodieForm: GoodieForm
   editingGoodieId: string | null
+  newGoodieOpen: boolean
   isSavingGoodie: boolean
+  isUploadingGoodieImage: boolean
+  handleGoodieImageFile: (file: File) => Promise<void>
   handleGoodieFormChange: (field: keyof GoodieForm, value: string | boolean) => void
   handleEditGoodie: (goodie: Goodie) => void
   handleCancelGoodie: () => void
@@ -39,6 +44,7 @@ interface DashboardViewModel {
 
 export function useDashboardViewModel(): DashboardViewModel {
   const { token, user } = useAuth()
+  const { showToast } = useToast()
   const [creator, setCreator] = useState<Creator | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -48,7 +54,9 @@ export function useDashboardViewModel(): DashboardViewModel {
   const [goodiesLoading, setGoodiesLoading] = useState(true)
   const [goodieForm, setGoodieForm] = useState<GoodieForm>(emptyForm)
   const [editingGoodieId, setEditingGoodieId] = useState<string | null>(null)
+  const [newGoodieOpen, setNewGoodieOpen] = useState(false)
   const [isSavingGoodie, setIsSavingGoodie] = useState(false)
+  const [isUploadingGoodieImage, setIsUploadingGoodieImage] = useState(false)
 
   useEffect(() => {
     if (!token || !user?.creatorId) return
@@ -87,8 +95,22 @@ export function useDashboardViewModel(): DashboardViewModel {
     try {
       await deletePost(id, token)
       setPosts((prev) => prev.filter((p) => p.id !== id))
+      showToast("Post supprimé", "info")
+    } catch {
+      showToast("Erreur lors de la suppression", "error")
+    }
+  }
+
+  const handleGoodieImageFile = async (file: File) => {
+    if (!token) return
+    setIsUploadingGoodieImage(true)
+    try {
+      const url = await uploadFile(file, token)
+      setGoodieForm((prev) => ({ ...prev, image: url }))
     } catch {
       // silently fail
+    } finally {
+      setIsUploadingGoodieImage(false)
     }
   }
 
@@ -99,6 +121,7 @@ export function useDashboardViewModel(): DashboardViewModel {
   const handleNewGoodie = () => {
     setGoodieForm(emptyForm)
     setEditingGoodieId(null)
+    setNewGoodieOpen(true)
   }
 
   const handleEditGoodie = (goodie: Goodie) => {
@@ -110,11 +133,13 @@ export function useDashboardViewModel(): DashboardViewModel {
       inStock: goodie.inStock,
     })
     setEditingGoodieId(goodie.id)
+    setNewGoodieOpen(false)
   }
 
   const handleCancelGoodie = () => {
     setGoodieForm(emptyForm)
     setEditingGoodieId(null)
+    setNewGoodieOpen(false)
   }
 
   const handleSaveGoodie = async () => {
@@ -135,10 +160,12 @@ export function useDashboardViewModel(): DashboardViewModel {
         const created = await createGoodie(data, token)
         setGoodies((prev) => [...prev, created])
       }
+      showToast(editingGoodieId ? "Goodie mis à jour" : "Goodie ajouté !", "success")
       setGoodieForm(emptyForm)
       setEditingGoodieId(null)
+      setNewGoodieOpen(false)
     } catch {
-      // silently fail
+      showToast("Erreur lors de la sauvegarde du goodie", "error")
     } finally {
       setIsSavingGoodie(false)
     }
@@ -149,14 +176,16 @@ export function useDashboardViewModel(): DashboardViewModel {
     try {
       await deleteGoodie(id, token)
       setGoodies((prev) => prev.filter((g) => g.id !== id))
+      showToast("Goodie supprimé", "info")
     } catch {
-      // silently fail
+      showToast("Erreur lors de la suppression", "error")
     }
   }
 
   return {
     creator, posts, isLoading, error, handleDeletePost,
-    goodies, goodiesLoading, goodieForm, editingGoodieId, isSavingGoodie,
+    goodies, goodiesLoading, goodieForm, editingGoodieId, newGoodieOpen, isSavingGoodie,
+    isUploadingGoodieImage, handleGoodieImageFile,
     handleGoodieFormChange, handleEditGoodie, handleCancelGoodie,
     handleSaveGoodie, handleDeleteGoodie, handleNewGoodie,
   }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
+import { useToast } from "../context/ToastContext"
 import { getCreatorById, getLikedPostIds } from "../services/creatorsService"
 import { subscribe, unsubscribe, getUserSubscriptions, getSubscribedCreators } from "../services/subscriptionService"
 import { uploadFile } from "../services/uploadService"
@@ -48,6 +49,7 @@ interface CreatorProfileViewModel {
 export function useCreatorProfileViewModel(creatorId: string): CreatorProfileViewModel {
   const { token, user, updateUser } = useAuth()
   const navigate = useNavigate()
+  const { showToast } = useToast()
 
   const [creator, setCreator] = useState<Creator | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
@@ -132,15 +134,17 @@ export function useCreatorProfileViewModel(creatorId: string): CreatorProfileVie
         setCreator((prev) =>
           prev ? { ...prev, subscriberCount: Math.max(0, (prev.subscriberCount ?? 1) - 1) } : prev
         )
+        showToast("Désabonné", "info")
       } else {
         await subscribe(creatorId, token)
         setIsSubscribed(true)
         setCreator((prev) =>
           prev ? { ...prev, subscriberCount: (prev.subscriberCount ?? 0) + 1 } : prev
         )
+        showToast(`Abonné à @${creator?.username ?? "ce créateur"} !`, "success")
       }
     } catch {
-      // silently fail
+      showToast("Erreur lors de l'abonnement", "error")
     }
   }
 
@@ -290,8 +294,11 @@ export function useCreatorProfileViewModel(creatorId: string): CreatorProfileVie
           : prev
       )
       setIsEditingProfile(false)
+      showToast("Profil mis à jour", "success")
     } catch (err) {
-      setProfileError(err instanceof Error ? err.message : "Erreur lors de la sauvegarde")
+      const msg = err instanceof Error ? err.message : "Erreur lors de la sauvegarde"
+      setProfileError(msg)
+      showToast(msg, "error")
     } finally {
       setIsSavingProfile(false)
     }
@@ -302,8 +309,9 @@ export function useCreatorProfileViewModel(creatorId: string): CreatorProfileVie
     try {
       await unsubscribe(targetId, token)
       setSubscriptions((prev) => prev.filter((c) => c.id !== targetId))
+      showToast("Désabonné", "info")
     } catch {
-      // silently fail
+      showToast("Erreur lors du désabonnement", "error")
     }
   }
 

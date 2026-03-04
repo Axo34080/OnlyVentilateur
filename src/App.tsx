@@ -1,7 +1,9 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
+import { ToastProvider } from './context/ToastContext'
 import Navbar from './components/Navbar'
+import ToastContainer from './components/ToastContainer'
 import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
 import Login from './pages/Login'
@@ -10,12 +12,12 @@ import Creators from './pages/Creators'
 import Subscribe from './pages/Subscribe'
 import Subscriptions from './pages/Subscriptions'
 import PostDetail from './pages/PostDetail'
+import Notifications from './pages/Notifications'
 import NotFound from './pages/NotFound'
 import Feed from './Views/Feed'
 import CreatorProfile from './Views/CreatorProfile'
 import UserProfile from './Views/UserProfile'
 import UserPublicProfile from './Views/UserPublicProfile'
-import BecomeCreator from './Views/BecomeCreator'
 import Dashboard from './Views/Dashboard'
 import NewPost from './Views/NewPost'
 import Shop from './Views/Shop'
@@ -24,9 +26,11 @@ function App() {
   return (
     <AuthProvider>
       <CartProvider>
+        <ToastProvider>
         <BrowserRouter>
           <div className="min-h-screen bg-slate-50">
             <Navbar />
+            <ToastContainer />
             <main className="max-w-6xl mx-auto px-4 py-8">
               <Routes>
                 {/* Routes publiques */}
@@ -45,9 +49,9 @@ function App() {
                 <Route path="/profile/edit" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
                 <Route path="/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
                 <Route path="/subscribe/:creatorId" element={<ProtectedRoute><Subscribe /></ProtectedRoute>} />
+                <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
 
                 {/* Espace créateur */}
-                <Route path="/become-creator" element={<ProtectedRoute><BecomeCreator /></ProtectedRoute>} />
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/dashboard/new-post" element={<ProtectedRoute><NewPost /></ProtectedRoute>} />
                 <Route path="/dashboard/edit-post/:id" element={<ProtectedRoute><NewPost /></ProtectedRoute>} />
@@ -58,6 +62,7 @@ function App() {
             </main>
           </div>
         </BrowserRouter>
+        </ToastProvider>
       </CartProvider>
     </AuthProvider>
   )

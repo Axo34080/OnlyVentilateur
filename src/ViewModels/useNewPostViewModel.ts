@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
+import { useToast } from "../context/ToastContext"
 import { createPost, updatePost, getMyPosts } from "../services/postService"
 import { uploadFile } from "../services/uploadService"
 
@@ -27,6 +28,7 @@ interface NewPostViewModel {
 export function useNewPostViewModel(): NewPostViewModel {
   const { token } = useAuth()
   const navigate = useNavigate()
+  const { showToast } = useToast()
   const { id } = useParams<{ id?: string }>()
   const isEditing = !!id
 
@@ -107,12 +109,16 @@ export function useNewPostViewModel(): NewPostViewModel {
     try {
       if (isEditing && id) {
         await updatePost(id, dto, token!)
+        showToast("Post modifié !", "success")
       } else {
         await createPost(dto, token!)
+        showToast("Post publié !", "success")
       }
       navigate("/dashboard")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur lors de la sauvegarde")
+      const msg = err instanceof Error ? err.message : "Erreur lors de la sauvegarde"
+      setError(msg)
+      showToast(msg, "error")
     } finally {
       setIsSubmitting(false)
     }

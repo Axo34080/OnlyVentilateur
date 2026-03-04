@@ -73,12 +73,12 @@ src/
 | `/posts/:id`            | `pages/PostDetail.tsx`     | Public — détail d'un post         |
 | `/shop`                 | `Views/Shop.tsx`           | Public — boutique goodies         |
 | `/feed`                 | `Views/Feed.tsx`           | **Protégé** — fil paginé          |
-| `/profile`              | `Views/UserProfile.tsx`    | **Protégé** — redirige vers `/creators/:id` si créateur, sinon formulaire édition |
-| `/profile/edit`         | `Views/UserProfile.tsx`    | **Protégé** — formulaire édition profil (username, bio, avatar) |
+| `/profile`              | `Views/UserProfile.tsx`    | **Protégé** — redirige systématiquement vers `/creators/:id` (tous les users sont créateurs) |
+| `/profile/edit`         | `Views/UserProfile.tsx`    | **Protégé** — formulaire édition profil (username, bio, avatar) + profil créateur |
 | `/subscriptions`        | `pages/Subscriptions.tsx`  | **Protégé** — abonnements actifs  |
 | `/subscribe/:creatorId` | `pages/Subscribe.tsx`      | **Protégé** — abonnement          |
-| `/become-creator`       | `Views/BecomeCreator.tsx`  | **Protégé** — formulaire devenir créateur |
-| `/dashboard`            | `Views/Dashboard.tsx`      | **Protégé** — espace créateur (stats + posts) |
+| `/notifications`        | `pages/Notifications.tsx`  | **Protégé** — centre de notifications |
+| `/dashboard`            | `Views/Dashboard.tsx`      | **Protégé** — espace créateur (stats + posts + boutique) |
 | `/dashboard/new-post`   | `Views/NewPost.tsx`        | **Protégé** — créer un post       |
 | `/dashboard/edit-post/:id` | `Views/NewPost.tsx`     | **Protégé** — éditer un post      |
 | `/users/:id`            | `Views/UserPublicProfile.tsx` | Public — profil utilisateur (redirect `/creators/:id` si créateur) |
@@ -100,6 +100,7 @@ interface User {
   avatar?: string;
   bio?: string;
   subscribedTo: string[]; // ids des créateurs abonnés
+  creatorId?: string;     // toujours défini — tout utilisateur est créateur à l'inscription
 }
 ```
 
@@ -140,6 +141,18 @@ interface Post {
 ---
 
 ## Contextes
+
+### `context/ToastContext.tsx` ✅
+
+Notifications toast légères (feedback immédiat des actions). Auto-dismiss après 3s.
+
+```typescript
+interface ToastContextType {
+  showToast: (message: string, type?: 'success' | 'error' | 'info') => void
+}
+```
+
+Utilisé dans : `useCreatorProfileViewModel`, `useUserProfileViewModel`, `useNewPostViewModel`, `useDashboardViewModel`. Rendu par `components/ToastContainer.tsx` (fixé `bottom-4 right-4`, vert/rouge/ardoise).
 
 ### `context/AuthContext.tsx` ✅
 
@@ -220,6 +233,24 @@ Centralise les appels créateurs + posts.
 | `uploadFile` | `(file: File, token) => Promise<string>` | POST `/api/upload` (multipart) → URL `/uploads/uuid.ext` |
 
 Envoie le fichier en `FormData`. Retourne l'URL servie statiquement. Utilisé dans `NewPost`, `CreatorProfile` (avatar + cover).
+
+### `services/commentsService.ts` ✅
+
+| Fonction       | Signature                                          | Description                              |
+| -------------- | -------------------------------------------------- | ---------------------------------------- |
+| `getComments`  | `(postId: string) => Promise<Comment[]>`           | GET `/api/posts/:id/comments` — public   |
+| `addComment`   | `(postId, content, token) => Promise<Comment>`     | POST `/api/posts/:id/comments` — JWT     |
+
+`Comment` : `{ id, postId, userId, username, avatar, content, createdAt }`.
+
+### `services/notificationsService.ts` ✅
+
+| Fonction          | Signature                              | Description                                              |
+| ----------------- | -------------------------------------- | -------------------------------------------------------- |
+| `getNotifications`| `(token) => Promise<Notification[]>`   | GET `/api/notifications` — retourne tout + marque lu    |
+| `getUnreadCount`  | `(token) => Promise<number>`           | GET `/api/notifications/unread-count` — pour badge Navbar |
+
+`Notification` : `{ id, userId, type ('subscribe'|'like'|'comment'), message, isRead, postId, actorAvatar, createdAt }`.
 
 ### `services/goodiesService.ts` ✅
 
@@ -317,6 +348,21 @@ Liste de tous les créateurs (depuis `GET /api/creators`) en grille responsive a
 
 Page détail d'un post : image (flou si premium + non abonné), titre, description, tags, likes, date. CTA abonnement si contenu verrouillé. Fil d'ariane vers le créateur. Likes persistés en BDD — le statut "liké" (❤️/🤍) est rechargé depuis `GET /api/posts/liked` au montage.
 
+**Section commentaires** (bas de page) :
+- Chargement depuis `GET /api/posts/:id/comments` au montage
+- Formulaire textarea + bouton "Commenter" si connecté — sinon lien "Connecte-toi"
+- Nouveau commentaire ajouté en tête de liste optimistically (sans rechargement)
+
+### `pages/Notifications.tsx` ✅
+
+Centre de notifications (`/notifications`, protégé). Chargement depuis `GET /api/notifications` (marque tout lu automatiquement). Affiche : avatar acteur (ou icône par type), message, temps relatif, lien "Voir →" vers le post si applicable. Les notifs non lues ont un fond légèrement bleu.
+
+**Types de notifications déclenchées :**
+- `subscribe` — quelqu'un s'abonne à votre profil
+- `like` — quelqu'un like un de vos posts
+- `comment` — quelqu'un commente un de vos posts
+- Pas de notification sur son propre contenu
+
 ### `pages/Subscriptions.tsx` ✅
 
 Page des abonnements actifs de l'utilisateur. Affiche les `CreatorCard` des créateurs suivis. État vide avec CTA vers `/creators`.
@@ -364,9 +410,7 @@ Fil de tous les posts avec le créateur associé. Skeleton loading. **Pagination
 
 ### `Views/UserProfile.tsx` ✅ (MVVM)
 
-Accessible via `/profile` et `/profile/edit`. **Si l'utilisateur est créateur** et accède à `/profile`, il est redirigé automatiquement vers `/creators/:id` (sa page créateur). `/profile/edit` reste disponible pour modifier username, bio, avatar + section "Profil créateur" (displayName, coverImage, prix).
-
-Pour les **non-créateurs**, `/profile` affiche le formulaire d'édition + liste des abonnements avec désabonnement.
+Accessible via `/profile` et `/profile/edit`. `/profile` redirige **systématiquement** vers `/creators/:id` (tous les utilisateurs sont créateurs). `/profile/edit` affiche le formulaire d'édition : username, bio, avatar + section "Profil créateur" (displayName, coverImage, prix abonnement) + liste des abonnements avec désabonnement.
 
 **ViewModel :** `ViewModels/useUserProfileViewModel.ts`
 
@@ -378,9 +422,9 @@ Pour les **non-créateurs**, `/profile` affiche le formulaire d'édition + liste
 
 ### `Views/UserPublicProfile.tsx` ✅ (MVVM)
 
-Profil public d'un utilisateur (`/users/:id`). Si l'utilisateur est créateur → `<Navigate to="/creators/:creatorId" replace />`. Sinon : avatar (fallback `ui-avatars.com`), username, bio.
+Profil public d'un utilisateur (`/users/:id`). Si l'utilisateur est créateur → `<Navigate to="/creators/:creatorId" replace />` (tous les utilisateurs sont créateurs, donc redirect systématique). Sinon : avatar (fallback `ui-avatars.com`), username, bio.
 
-- **Own profile + non-créateur** : boutons "Modifier le profil" (→ `/profile/edit`) + "Devenir créateur" (→ `/become-creator`)
+- **Own profile** : bouton "Modifier le profil" (→ `/profile/edit`)
 - **Autre profil** : lien "Découvrir les créateurs"
 
 **ViewModel :** `ViewModels/useUserPublicProfileViewModel.ts` — retourne `{ publicUser, isLoading, isOwnProfile, isCreator }`.
@@ -396,13 +440,9 @@ Boutique de goodies (`/shop`). Chargement depuis `GET /api/goodies`. Filtre par 
 - `handleAddToCart` → flash "Ajouté !" 1.5s via `addedId`
 - `handleCheckout` → `clearCart()` après 1.5s (simulation)
 
-### `Views/BecomeCreator.tsx` ✅ (MVVM)
-
-Formulaire devenir créateur (`/become-creator`). Champs : displayName, bio, prix abonnement. POST `/api/creators` → `user.creatorId` mis à jour via `updateUser()` + redirect `/creators/:id`.
-
 ### `Views/Dashboard.tsx` ✅ (MVVM)
 
-Espace créateur (`/dashboard`). Si non-créateur → CTA "Devenir créateur". Sections :
+Espace créateur (`/dashboard`). Tous les utilisateurs sont créateurs — pas de garde "non-créateur". Sections :
 
 1. **Stats** : posts, abonnés, prix abonnement, posts premium
 2. **Mes posts** : liste avec image/titre/tags, boutons Éditer (→ `/dashboard/edit-post/:id`) + Supprimer (confirm)
@@ -414,6 +454,8 @@ Espace créateur (`/dashboard`). Si non-créateur → CTA "Devenir créateur". S
 - Charge `getGoodies(creatorId)` pour la section boutique
 - Retourne posts + creator + goodies + états loading/error
 - Handlers goodies : `handleNewGoodie`, `handleEditGoodie`, `handleCancelGoodie`, `handleSaveGoodie`, `handleDeleteGoodie`, `handleGoodieFormChange`
+- `newGoodieOpen: boolean` — flag dédié pour l'ouverture du formulaire "nouveau goodie"
+- **Upload image goodie** : `handleGoodieImageFile(file)` → `POST /api/upload` → `goodieForm.image = url`. `isUploadingGoodieImage` désactive le bouton "Créer" pendant l'upload. Champ URL de secours toujours présent.
 
 ### `Views/NewPost.tsx` ✅ (MVVM)
 
@@ -439,7 +481,8 @@ OnlyVentilateurBack/src/
 ├── auth/                   # POST /api/login + /api/signup + JWT strategy
 ├── users/                  # GET/PATCH /api/users/me (+ unicité username + sync creator avatar/bio)
 ├── creators/               # GET /api/creators, /api/creators/:id, /api/creators/me (GET+PATCH), POST /api/creators
-├── posts/                  # CRUD complet + liked + like toggle
+├── posts/                  # CRUD complet + liked + like toggle + commentaires
+├── notifications/          # GET /api/notifications + unread-count
 ├── subscriptions/          # GET/POST/DELETE /api/subscriptions (+ blocage auto-abonnement)
 ├── goodies/                # GET/POST/PATCH/DELETE /api/goodies (CRUD + ownership check)
 ├── orders/                 # GET/POST /api/orders (JWT protégé)
@@ -455,9 +498,9 @@ OnlyVentilateurBack/src/
 | GET     | `/api/creators/me`     | JWT  | Profil créateur de l'utilisateur connecté         |
 | PATCH   | `/api/creators/me`     | JWT  | Modifier displayName, coverImage, subscriptionPrice |
 | GET     | `/api/creators/:id`    | —    | Un créateur par ID (avec posts, subscriberCount, postCount) |
-| POST    | `/api/creators`        | JWT  | Devenir créateur — copie avatar+bio depuis User   |
 
 > ⚠️ La route `/me` doit être déclarée **avant** `/:id` dans le controller pour éviter la collision.
+> ℹ️ Le `POST /api/creators` (devenir créateur) est supprimé — la création est automatique à l'inscription.
 
 ### Endpoints Posts
 
@@ -471,6 +514,8 @@ OnlyVentilateurBack/src/
 | PATCH   | `/api/posts/:id`         | JWT  | Modifier un post (ownership check)                |
 | DELETE  | `/api/posts/:id`         | JWT  | Supprimer un post (ownership check)               |
 | POST    | `/api/posts/:id/like`    | JWT  | Toggle like → `{ likes, isLiked }`                |
+| GET     | `/api/posts/:id/comments` | —   | Commentaires d'un post (DESC createdAt)            |
+| POST    | `/api/posts/:id/comments` | JWT | Créer un commentaire `{ content: string }`         |
 
 > ⚠️ Les routes `/mine` et `/liked` doivent être déclarées **avant** `/:id` dans le controller.
 
@@ -482,11 +527,28 @@ OnlyVentilateurBack/src/
 | Creator      | `creators/creator.entity.ts`        | OneToMany Post, OneToMany Subscription                 |
 | Post         | `posts/post.entity.ts`              | ManyToOne Creator                                      |
 | PostLike     | `posts/post-like.entity.ts`         | `userId` + `postId` — `@Unique(['userId', 'postId'])` |
+| Comment      | `posts/comment.entity.ts`           | ManyToOne Post (cascade delete), `userId`, `username`, `avatar`, `content` |
+| Notification | `notifications/notification.entity.ts` | `userId`, `type`, `message`, `isRead`, `postId?`, `actorAvatar?` |
 | Subscription | `subscriptions/subscription.entity.ts` | ManyToOne User, ManyToOne Creator — Unique(user, creator) |
 | Goodie       | `goodies/goodie.entity.ts`          | ManyToOne Creator (eager)                              |
 | Order        | `orders/order.entity.ts`            | `items: OrderLineItem[]` (JSON), `userId`, `total`     |
 
 > ⚠️ Toutes les entités doivent être listées dans `entities: [...]` du `TypeOrmModule.forRootAsync` dans `app.module.ts` pour que `synchronize: true` crée les tables.
+
+### Endpoints Notifications
+
+| Méthode | Route                              | Auth | Description                                        |
+| ------- | ---------------------------------- | ---- | -------------------------------------------------- |
+| GET     | `/api/notifications/unread-count`  | JWT  | `{ count: number }` — pour le badge Navbar         |
+| GET     | `/api/notifications`               | JWT  | Toutes les notifs + marque tout lu automatiquement |
+
+> ⚠️ `/unread-count` doit être déclaré **avant** le catch-all dans le controller.
+
+Déclencheurs (côté service) :
+- `subscriptions.service.ts` → `subscribe()` → notif type `subscribe`
+- `posts.service.ts` → `toggleLike()` (nouveau like) → notif type `like`
+- `posts.service.ts` → `addComment()` → notif type `comment`
+- Guard : pas de notif si `actor.id === owner.id`
 
 ### Endpoints Goodies
 
@@ -615,13 +677,13 @@ Le seed est ignoré si des créateurs existent déjà.
 - [x] Suppression de post depuis le dashboard (avec confirmation `confirm()`)
 - [x] **Boutique goodies** (`/shop`) + `CartContext` : 8 goodies mockés, filtre par créateur, panier latéral sticky avec gestion des quantités, checkout simulé
 - [x] `CartContext` global (add, remove, updateQuantity, clearCart, totalItems, totalPrice) branché dans `App.tsx`
-- [x] Navbar : liens Boutique, Dashboard (si créateur) / Devenir créateur (sinon), badge panier avec compteur
-- [x] `User.creatorId` ajouté dans le type — détecte automatiquement si l'utilisateur est créateur
+- [x] Navbar : liens Boutique, Dashboard (toujours visible), badge panier avec compteur
+- [x] `User.creatorId` — toujours défini, tout utilisateur inscrit est automatiquement un créateur
 - [x] Nouveaux endpoints NestJS implémentés : `GET/PATCH /api/creators/me`, `GET /api/posts/mine`, `POST /api/posts`, `PATCH /api/posts/:id`, `DELETE /api/posts/:id`
 - [x] Profil utilisateur = profil créateur unifié : avatar + bio syncés automatiquement, `coverImage` + `displayName` éditables depuis `/profile`
 - [x] Sécurité API : fix JWT fallback secret, `Object.assign()` → assignation explicite, DTOs validés (class-validator), rate limiting `@nestjs/throttler` (30 req/min), `synchronize` conditionnel prod
 - [x] Auto-abonnement bloqué : `POST /api/subscriptions` vérifie `user.creatorId !== dto.creatorId` (backend) + bouton "Gérer mon espace" sur sa propre page créateur (frontend)
-- [x] **Page créateur = page profil** : `/profile` redirige vers `/creators/:id` si l'user est créateur — `/profile/edit` reste pour l'édition
+- [x] **Page créateur = page profil** : `/profile` redirige systématiquement vers `/creators/:id` — tous les users sont créateurs à l'inscription (auto-création à `POST /api/signup`)
 - [x] **Édition inline sur la page créateur** : avatar (upload fichier), couverture (URL + preview), nom d'affichage, bio, prix — tout éditable directement depuis sa propre page créateur
 - [x] **Onglet "Mes abonnements"** sur la page créateur (own) : liste des créateurs suivis + désabonnement
 - [x] Boutons own page : "Modifier le profil" (inline edit) + "Gérer mon espace →" (→ `/dashboard`)

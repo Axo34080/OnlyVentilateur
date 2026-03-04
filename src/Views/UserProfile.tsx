@@ -16,6 +16,10 @@ function UserProfile() {
   if (user?.creatorId && location.pathname === "/profile") {
     return <Navigate to={`/creators/${user.creatorId}`} replace />
   }
+  // Fallback si creatorId pas encore chargé
+  if (!user?.creatorId && location.pathname === "/profile") {
+    return <Navigate to="/dashboard" replace />
+  }
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -53,9 +57,7 @@ function UserProfile() {
           <h1 className="text-xl font-bold text-slate-900">{user.username}</h1>
           <p className="text-sm text-slate-400">{user.email}</p>
           {user.bio && <p className="text-sm text-slate-600 mt-1">{user.bio}</p>}
-          {user.creatorId && (
-            <span className="inline-block mt-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">Créateur</span>
-          )}
+          <span className="inline-block mt-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">Créateur</span>
           <p className="text-xs text-slate-400 mt-1">Cliquer sur la photo pour la changer</p>
         </div>
       </div>
@@ -84,7 +86,7 @@ function UserProfile() {
               rows={3} placeholder="Parle de toi et de tes ventilateurs..."
               className="w-full px-4 py-2.5 rounded-lg border border-slate-300 disabled:bg-slate-50 disabled:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 resize-none"
             />
-            {isEditing && user.creatorId && (
+            {isEditing && (
               <p className="text-xs text-slate-400 mt-1">La bio est aussi affichée sur ton profil créateur</p>
             )}
           </div>
@@ -107,8 +109,7 @@ function UserProfile() {
       </div>
 
       {/* Profil créateur */}
-      {user.creatorId && (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
           <div className="relative h-32 bg-gradient-to-r from-blue-100 to-slate-100 overflow-hidden">
             {(isEditingCreator ? creatorForm.coverImage : creatorData?.coverImage) && (
               <img
@@ -178,8 +179,7 @@ function UserProfile() {
               </div>
             )}
           </div>
-        </div>
-      )}
+      </div>
 
       {/* Abonnements */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6">

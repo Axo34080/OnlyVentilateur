@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "../context/AuthContext"
+import { useToast } from "../context/ToastContext"
 import { getSubscribedCreators, unsubscribe } from "../services/subscriptionService"
 import type { Creator } from "../types/Creator"
 
@@ -41,6 +42,7 @@ interface UserProfileViewModel {
 
 export function useUserProfileViewModel(): UserProfileViewModel {
   const { user, token, updateUser } = useAuth()
+  const { showToast } = useToast()
 
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -91,8 +93,9 @@ export function useUserProfileViewModel(): UserProfileViewModel {
     try {
       await unsubscribe(creatorId, token)
       setSubscriptions((prev) => prev.filter((c) => c.id !== creatorId))
+      showToast("Désabonné", "info")
     } catch {
-      // silently fail
+      showToast("Erreur lors du désabonnement", "error")
     }
   }
 
@@ -138,8 +141,11 @@ export function useUserProfileViewModel(): UserProfileViewModel {
         setCreatorData((prev) => prev ? { ...prev, avatar: updated.avatar ?? prev.avatar, bio: updated.bio ?? prev.bio } : prev)
       }
       setIsEditing(false)
+      showToast("Profil mis à jour", "success")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur lors de la sauvegarde")
+      const msg = err instanceof Error ? err.message : "Erreur lors de la sauvegarde"
+      setError(msg)
+      showToast(msg, "error")
     } finally {
       setIsSaving(false)
     }
@@ -201,8 +207,11 @@ export function useUserProfileViewModel(): UserProfileViewModel {
       const updated = await res.json()
       setCreatorData((prev) => prev ? { ...prev, ...updated } : updated)
       setIsEditingCreator(false)
+      showToast("Profil créateur mis à jour", "success")
     } catch (err) {
-      setCreatorError(err instanceof Error ? err.message : "Erreur lors de la sauvegarde")
+      const msg = err instanceof Error ? err.message : "Erreur lors de la sauvegarde"
+      setCreatorError(msg)
+      showToast(msg, "error")
     } finally {
       setIsSavingCreator(false)
     }

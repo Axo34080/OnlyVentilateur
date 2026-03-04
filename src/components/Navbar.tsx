@@ -1,10 +1,23 @@
-import { Link, NavLink } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { Link, NavLink, useLocation } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { useCart } from "../context/CartContext"
+import { getUnreadCount } from "../services/notificationsService"
 
 function Navbar() {
-  const { user, isAuthenticated, logout } = useAuth()
+  const { user, token, isAuthenticated, logout } = useAuth()
   const { totalItems } = useCart()
+  const location = useLocation()
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    if (!token) { setUnreadCount(0); return }
+    getUnreadCount(token).then(setUnreadCount).catch(() => {})
+  }, [token])
+
+  useEffect(() => {
+    if (location.pathname === '/notifications') setUnreadCount(0)
+  }, [location.pathname])
 
   const navLink = ({ isActive }: { isActive: boolean }) =>
     `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
@@ -30,12 +43,21 @@ function Navbar() {
               <NavLink to="/feed" className={navLink}>Fil</NavLink>
               <NavLink to="/subscriptions" className={navLink}>Abonnements</NavLink>
 
-              {/* Lien Dashboard si créateur */}
-              {user.creatorId ? (
-                <NavLink to="/dashboard" className={navLink}>Dashboard</NavLink>
-              ) : (
-                <NavLink to="/become-creator" className={navLink}>Devenir créateur</NavLink>
-              )}
+              <NavLink to="/dashboard" className={navLink}>Dashboard</NavLink>
+
+              {/* Icône notifications */}
+              <NavLink
+                to="/notifications"
+                className="relative px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors text-slate-500 hover:text-slate-900"
+                title="Notifications"
+              >
+                🔔
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </NavLink>
 
               {/* Icône panier */}
               <NavLink
