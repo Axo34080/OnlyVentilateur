@@ -41,7 +41,6 @@ function Navbar() {
             <div className="flex items-center gap-2 ml-2">
               <NavLink to="/feed" className={navLink}>Fil</NavLink>
 
-              <NavLink to="/dashboard" className={navLink}>Dashboard</NavLink>
 
               {/* Icône notifications */}
               <NavLink

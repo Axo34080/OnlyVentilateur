@@ -11,6 +11,12 @@ export interface Goodie {
   creator?: { displayName: string; username: string }
 }
 
+export async function getGoodieById(id: string): Promise<Goodie> {
+  const res = await fetch(`/api/goodies/${id}`)
+  if (!res.ok) throw new Error("Goodie introuvable")
+  return res.json() as Promise<Goodie>
+}
+
 export async function getGoodies(creatorId?: string): Promise<Goodie[]> {
   const url = creatorId ? `/api/goodies?creatorId=${creatorId}` : "/api/goodies"
   const res = await fetch(url)

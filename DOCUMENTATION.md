@@ -72,10 +72,10 @@ src/
 | `/creators/:id`         | `Views/CreatorProfile.tsx` | Public — profil + onglets Posts/À propos/Abonnements |
 | `/posts/:id`            | `pages/PostDetail.tsx`     | Public — détail d'un post         |
 | `/shop`                 | `Views/Shop.tsx`           | Public — boutique goodies         |
-| `/feed`                 | `Views/Feed.tsx`           | **Protégé** — fil paginé          |
+| `/shop/:id`             | `pages/GoodieDetail.tsx`   | Public — détail d'un article boutique |
+| `/feed`                 | `Views/Feed.tsx`           | **Protégé** — fil infinite scroll + onglets Nouveautés/Abonnements |
 | `/profile`              | `Views/UserProfile.tsx`    | **Protégé** — redirige systématiquement vers `/creators/:id` (tous les users sont créateurs) |
 | `/profile/edit`         | `Views/UserProfile.tsx`    | **Protégé** — formulaire édition profil (username, bio, avatar) + profil créateur |
-| `/subscriptions`        | `pages/Subscriptions.tsx`  | **Protégé** — abonnements actifs  |
 | `/subscribe/:creatorId` | `pages/Subscribe.tsx`      | **Protégé** — abonnement          |
 | `/notifications`        | `pages/Notifications.tsx`  | **Protégé** — centre de notifications |
 | `/dashboard`            | `Views/Dashboard.tsx`      | **Protégé** — espace créateur (stats + posts + boutique) |
@@ -256,6 +256,7 @@ Envoie le fichier en `FormData`. Retourne l'URL servie statiquement. Utilisé da
 
 | Fonction          | Signature                                                       | Description                          |
 | ----------------- | --------------------------------------------------------------- | ------------------------------------ |
+| `getGoodieById`   | `(id: string) => Promise<Goodie>`                               | GET `/api/goodies/:id`               |
 | `getGoodies`      | `(creatorId?: string) => Promise<Goodie[]>`                     | GET `/api/goodies[?creatorId=]`      |
 | `createGoodie`    | `(data, token) => Promise<Goodie>`                              | POST `/api/goodies`                  |
 | `updateGoodie`    | `(id, data, token) => Promise<Goodie>`                          | PATCH `/api/goodies/:id`             |
@@ -363,9 +364,9 @@ Centre de notifications (`/notifications`, protégé). Chargement depuis `GET /a
 - `comment` — quelqu'un commente un de vos posts
 - Pas de notification sur son propre contenu
 
-### `pages/Subscriptions.tsx` ✅
+### `pages/Subscriptions.tsx` ~~supprimée~~
 
-Page des abonnements actifs de l'utilisateur. Affiche les `CreatorCard` des créateurs suivis. État vide avec CTA vers `/creators`.
+Fusionnée dans `Views/Feed.tsx` — l'onglet "Abonnements" remplace cette page. Route `/subscriptions` et lien Navbar "Abonnements" supprimés.
 
 ### `pages/Subscribe.tsx` ✅
 
@@ -400,13 +401,19 @@ Profil complet d'un créateur. Bannière + avatar flottant, **onglets Posts / À
 
 ### `Views/Feed.tsx` ✅ (MVVM)
 
-Fil de tous les posts avec le créateur associé. Skeleton loading. **Pagination** (9 posts/page). Bannière d'erreur si le backend est hors ligne.
+Fil de tous les posts avec le créateur associé. Skeleton loading. **Infinite scroll** (Intersection Observer, batches de 9). **Onglets filtre** "Nouveautés" / "Abonnements" style X.com. Bannière d'erreur si le backend est hors ligne.
+
+**Onglet Nouveautés** : tous les posts triés par `createdAt` DESC.
+**Onglet Abonnements** : posts filtrés sur les créateurs suivis (IDs via `getUserSubscriptions`).
 
 **ViewModel :** `ViewModels/useFeedViewModel.ts`
 
-- Retourne : `paginatedPosts`, `getCreator(creatorId)`, `handleLike`, `isPostLiked`, `isLoading`, `error`, `page`, `totalPages`, `setPage`
+- Retourne : `visiblePosts`, `getCreator(creatorId)`, `handleLike`, `isPostLiked`, `isLoading`, `isFetchingMore`, `hasMore`, `loadMore`, `error`, `filter`, `setFilter`
+- `filter: 'nouveautes' | 'abonnements'` — `setFilter` reset le `displayedCount` à 9
+- `subscribedCreatorIds: Set<string>` chargés depuis `GET /api/subscriptions`
 - `likedPostIds` chargés depuis `GET /api/posts/liked` au montage — persistent au rechargement
 - Revert optimistic si l'appel like échoue (res.ok check)
+- Sentinel `<div ref={sentinelRef}>` + `IntersectionObserver` dans `Feed.tsx` déclenchent `loadMore()`
 
 ### `Views/UserProfile.tsx` ✅ (MVVM)
 
@@ -439,6 +446,11 @@ Boutique de goodies (`/shop`). Chargement depuis `GET /api/goodies`. Filtre par 
 - Handlers : `handleFilter`, `handleAddToCart`, `handleCheckout`
 - `handleAddToCart` → flash "Ajouté !" 1.5s via `addedId`
 - `handleCheckout` → `clearCart()` après 1.5s (simulation)
+- Cards boutique cliquables : image + nom = `<Link to="/shop/:id">`, bouton "Ajouter" indépendant
+
+### `pages/GoodieDetail.tsx` ✅
+
+Page détail d'un article boutique (`/shop/:id`, publique). Fetch via `getGoodieById(id)` au montage. Affiche : image, nom, créateur (lien cliquable → `/creators/:id`), description, prix, bouton "Ajouter au panier" (flash "Ajouté !" 1.5s) ou badge "Rupture de stock". Skeleton loading. Lien retour → `/shop`.
 
 ### `Views/Dashboard.tsx` ✅ (MVVM)
 

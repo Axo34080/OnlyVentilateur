@@ -11,6 +11,7 @@ import Signup from './pages/Signup'
 import Creators from './pages/Creators'
 import Subscribe from './pages/Subscribe'
 import PostDetail from './pages/PostDetail'
+import GoodieDetail from './pages/GoodieDetail'
 import Notifications from './pages/Notifications'
 import NotFound from './pages/NotFound'
 import Feed from './Views/Feed'
@@ -40,6 +41,7 @@ function App() {
                 <Route path="/creators/:id" element={<CreatorProfile />} />
                 <Route path="/posts/:id" element={<PostDetail />} />
                 <Route path="/shop" element={<Shop />} />
+                <Route path="/shop/:id" element={<GoodieDetail />} />
                 <Route path="/users/:id" element={<UserPublicProfile />} />
 
                 {/* Routes protégées */}

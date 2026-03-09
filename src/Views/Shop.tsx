@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom"
 import { useShopViewModel } from "../ViewModels/useShopViewModel"
 import { useCart } from "../context/CartContext"
 
@@ -64,14 +65,18 @@ function Shop() {
                   key={goodie.id}
                   className="bg-white rounded-xl border border-slate-200 overflow-hidden flex flex-col"
                 >
-                  <img
-                    src={goodie.image}
-                    alt={goodie.name}
-                    className="w-full aspect-square object-cover bg-slate-100"
-                  />
+                  <Link to={`/shop/${goodie.id}`}>
+                    <img
+                      src={goodie.image}
+                      alt={goodie.name}
+                      className="w-full aspect-square object-cover bg-slate-100 hover:opacity-90 transition-opacity"
+                    />
+                  </Link>
                   <div className="p-3 flex flex-col gap-2 flex-1">
                     <div>
-                      <p className="font-semibold text-slate-900 text-sm leading-tight">{goodie.name}</p>
+                      <Link to={`/shop/${goodie.id}`} className="font-semibold text-slate-900 text-sm leading-tight hover:text-blue-600 transition-colors">
+                        {goodie.name}
+                      </Link>
                       <p className="text-xs text-slate-400 mt-0.5">par {goodie.creator}</p>
                     </div>
                     <div className="flex items-center justify-between mt-auto">
