@@ -1,18 +1,51 @@
+import { useEffect, useRef } from "react"
 import { Link } from "react-router-dom"
 import { useFeedViewModel } from "../ViewModels/useFeedViewModel"
 import PostCard from "../components/PostCard"
 
 function Feed() {
-  const { paginatedPosts, getCreator, handleLike, isPostLiked, isLoading, error, page, totalPages, setPage } = useFeedViewModel()
+  const { visiblePosts, getCreator, handleLike, isPostLiked, isLoading, isFetchingMore, hasMore, loadMore, error, filter, setFilter } = useFeedViewModel()
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) loadMore() },
+      { rootMargin: "200px" }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [loadMore])
 
   return (
     <div className="flex flex-col gap-6">
 
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">🌀 Fil d'actualité</h1>
-        {!isLoading && !error && totalPages > 1 && (
-          <span className="text-sm text-slate-400">Page {page} / {totalPages}</span>
-        )}
+      <h1 className="text-2xl font-bold text-slate-900">🌀 Fil d'actualité</h1>
+
+      {/* Onglets filtre style X.com */}
+      <div className="flex border-b border-slate-200">
+        <button
+          onClick={() => setFilter('nouveautes')}
+          className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+            filter === 'nouveautes'
+              ? "text-slate-900 border-b-2 border-slate-900"
+              : "text-slate-400 hover:text-slate-700"
+          }`}
+        >
+          Nouveautés
+        </button>
+        <button
+          onClick={() => setFilter('abonnements')}
+          className={`flex-1 py-3 text-sm font-semibold transition-colors ${
+            filter === 'abonnements'
+              ? "text-slate-900 border-b-2 border-slate-900"
+              : "text-slate-400 hover:text-slate-700"
+          }`}
+        >
+          Abonnements
+        </button>
       </div>
 
       {error ? (
@@ -25,10 +58,24 @@ function Feed() {
             <div key={i} className="bg-white rounded-2xl border border-slate-200 h-64 animate-pulse" />
           ))}
         </div>
+      ) : visiblePosts.length === 0 ? (
+        <div className="text-center py-16 text-slate-400">
+          {filter === 'abonnements'
+            ? "Tu n'es abonné à aucun créateur pour l'instant."
+            : "Aucun post disponible."
+          }
+          {filter === 'abonnements' && (
+            <div className="mt-3">
+              <Link to="/creators" className="text-blue-600 hover:underline text-sm font-medium">
+                Découvrir des créateurs →
+              </Link>
+            </div>
+          )}
+        </div>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {paginatedPosts.map((post) => {
+            {visiblePosts.map((post) => {
               const creator = getCreator(post.creatorId)
               return (
                 <div key={post.id} className="flex flex-col gap-2">
@@ -52,36 +99,19 @@ function Feed() {
             })}
           </div>
 
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-2">
-              <button
-                onClick={() => setPage(page - 1)}
-                disabled={page === 1}
-                className="px-4 py-2 rounded-lg text-sm font-medium border border-slate-200 disabled:opacity-40 hover:bg-slate-50 transition-colors"
-              >
-                ← Précédent
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPage(p)}
-                  className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
-                    p === page
-                      ? "bg-blue-600 text-white"
-                      : "border border-slate-200 hover:bg-slate-50 text-slate-600"
-                  }`}
-                >
-                  {p}
-                </button>
+          {/* Sentinel pour l'Intersection Observer */}
+          <div ref={sentinelRef} className="h-4" />
+
+          {isFetchingMore && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="bg-white rounded-2xl border border-slate-200 h-64 animate-pulse" />
               ))}
-              <button
-                onClick={() => setPage(page + 1)}
-                disabled={page === totalPages}
-                className="px-4 py-2 rounded-lg text-sm font-medium border border-slate-200 disabled:opacity-40 hover:bg-slate-50 transition-colors"
-              >
-                Suivant →
-              </button>
             </div>
+          )}
+
+          {!hasMore && visiblePosts.length > 0 && (
+            <p className="text-center text-sm text-slate-400 py-4">— Fin du fil —</p>
           )}
         </>
       )}

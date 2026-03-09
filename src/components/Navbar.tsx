@@ -36,12 +36,10 @@ function Navbar() {
         {/* Liens + actions */}
         <div className="flex items-center gap-1">
           <NavLink to="/creators" className={navLink}>Créateurs</NavLink>
-          <NavLink to="/shop" className={navLink}>Boutique</NavLink>
 
           {isAuthenticated && user ? (
             <div className="flex items-center gap-2 ml-2">
               <NavLink to="/feed" className={navLink}>Fil</NavLink>
-              <NavLink to="/subscriptions" className={navLink}>Abonnements</NavLink>
 
               <NavLink to="/dashboard" className={navLink}>Dashboard</NavLink>
 

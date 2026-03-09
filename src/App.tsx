@@ -10,7 +10,6 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Creators from './pages/Creators'
 import Subscribe from './pages/Subscribe'
-import Subscriptions from './pages/Subscriptions'
 import PostDetail from './pages/PostDetail'
 import Notifications from './pages/Notifications'
 import NotFound from './pages/NotFound'
@@ -47,7 +46,6 @@ function App() {
                 <Route path="/feed" element={<ProtectedRoute><Feed /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
                 <Route path="/profile/edit" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
-                <Route path="/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
                 <Route path="/subscribe/:creatorId" element={<ProtectedRoute><Subscribe /></ProtectedRoute>} />
                 <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
 
