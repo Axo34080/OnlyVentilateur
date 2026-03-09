@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useAuth } from "../context/AuthContext"
 import { getLikedPostIds } from "../services/creatorsService"
+import { getPosts } from "../services/postService"
 import type { Post } from "../types/Post"
 import type { Creator } from "../types/Creator"
 
@@ -31,46 +32,14 @@ export function useFeedViewModel(): FeedViewModel {
     if (!token) return
     getLikedPostIds(token)
       .then((ids) => setLikedPostIds(new Set(ids)))
-      .catch(() => {})
+      .catch(() => setError("Impossible de charger vos likes."))
   }, [token])
 
   useEffect(() => {
-    fetch("/api/posts")
-      .then((res) => {
-        if (!res.ok) throw new Error()
-        return res.json()
-      })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .then((data: any[]) => {
-        const mapped: Post[] = data.map((p) => ({
-          id: p.id,
-          creatorId: p.creator?.id ?? "",
-          title: p.title,
-          description: p.description,
-          image: p.image,
-          isLocked: p.isLocked,
-          price: p.price != null ? parseFloat(p.price) : undefined,
-          likes: p.likes,
-          tags: p.tags ?? [],
-          createdAt: p.createdAt,
-        }))
-
-        data.forEach((p) => {
-          if (p.creator && !creatorsMap.current.has(p.creator.id)) {
-            creatorsMap.current.set(p.creator.id, {
-              id: p.creator.id,
-              username: p.creator.username,
-              displayName: p.creator.displayName,
-              avatar: p.creator.avatar ?? "",
-              coverImage: p.creator.coverImage ?? "",
-              bio: p.creator.bio ?? "",
-              subscriptionPrice: parseFloat(p.creator.subscriptionPrice),
-              isPremium: p.creator.isPremium,
-            })
-          }
-        })
-
-        setPosts(mapped)
+    getPosts()
+      .then(({ posts, creators }) => {
+        creators.forEach((c) => creatorsMap.current.set(c.id, c))
+        setPosts(posts)
       })
       .catch(() => setError("Une erreur est survenue lors du chargement. Réessaie dans quelques instants."))
       .finally(() => setIsLoading(false))

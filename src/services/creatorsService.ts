@@ -1,7 +1,7 @@
 import type { Creator } from "../types/Creator"
 import type { Post } from "../types/Post"
 
-export interface CreatorWithPosts extends Creator {
+interface CreatorWithPosts extends Creator {
   posts: Post[]
 }
 

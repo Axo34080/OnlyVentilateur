@@ -1,6 +1,38 @@
 import type { Post } from "../types/Post"
+import type { Creator } from "../types/Creator"
 
-export interface CreatePostDto {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapCreator(c: any): Creator {
+  return {
+    id: c.id,
+    username: c.username,
+    displayName: c.displayName,
+    avatar: c.avatar ?? "",
+    coverImage: c.coverImage ?? "",
+    bio: c.bio ?? "",
+    subscriptionPrice: parseFloat(c.subscriptionPrice),
+    isPremium: c.isPremium,
+  }
+}
+
+export async function getPosts(): Promise<{ posts: Post[]; creators: Creator[] }> {
+  const res = await fetch("/api/posts")
+  if (!res.ok) throw new Error("Erreur lors du chargement des posts")
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data: any[] = await res.json()
+  const creators: Creator[] = []
+  const seenIds = new Set<string>()
+  const posts = data.map((p) => {
+    if (p.creator && !seenIds.has(p.creator.id)) {
+      seenIds.add(p.creator.id)
+      creators.push(mapCreator(p.creator))
+    }
+    return mapPost(p)
+  })
+  return { posts, creators }
+}
+
+interface CreatePostDto {
   title: string
   description: string
   image: string
@@ -9,7 +41,7 @@ export interface CreatePostDto {
   tags: string[]
 }
 
-export interface UpdatePostDto extends Partial<CreatePostDto> {}
+interface UpdatePostDto extends Partial<CreatePostDto> {}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapPost(p: any): Post {
@@ -76,21 +108,3 @@ export async function deletePost(id: string, token: string): Promise<void> {
   if (!res.ok) throw new Error("Erreur lors de la suppression du post")
 }
 
-export async function becomeCreator(
-  data: { displayName: string; bio: string; subscriptionPrice: number },
-  token: string
-): Promise<{ creatorId: string }> {
-  const res = await fetch("/api/creators", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  })
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(body.message ?? "Erreur lors de la création du profil créateur")
-  }
-  return res.json()
-}

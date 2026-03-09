@@ -9,7 +9,7 @@ export interface GoodieItem {
   creator: string
 }
 
-export interface CartItem extends GoodieItem {
+interface CartItem extends GoodieItem {
   quantity: number
 }
 
