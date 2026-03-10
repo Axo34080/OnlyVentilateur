@@ -49,7 +49,7 @@ function NewPost() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label htmlFor="post-image-file" className="block text-sm font-medium text-slate-700 mb-1">
             Image <span className="text-red-500">*</span>
           </label>
 
@@ -58,15 +58,17 @@ function NewPost() {
             type="button"
             onClick={() => imageInputRef.current?.click()}
             disabled={isUploadingImage}
+            aria-label="Choisir un fichier image"
             className="w-full px-4 py-2.5 rounded-lg border-2 border-dashed border-slate-300 hover:border-blue-400 text-slate-500 hover:text-blue-500 text-sm transition-colors disabled:opacity-50"
           >
             {isUploadingImage ? "Téléversement..." : "Choisir un fichier image"}
           </button>
           <input
+            id="post-image-file"
             ref={imageInputRef}
             type="file"
             accept="image/*"
-            className="hidden"
+            className="sr-only"
             onChange={(e) => {
               const file = e.target.files?.[0]
               if (file) handleImageFileChange(file)
@@ -114,7 +116,7 @@ function NewPost() {
 
         {/* Section premium */}
         <div className="border-t border-slate-100 pt-4">
-          <label htmlFor="post-locked" className="flex items-center gap-3 cursor-pointer">
+          <label htmlFor="post-locked" aria-label="Contenu premium (verrouillé)" className="flex items-center gap-3 cursor-pointer">
             <input
               id="post-locked"
               type="checkbox"

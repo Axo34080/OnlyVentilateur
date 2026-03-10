@@ -83,8 +83,11 @@ function CreatorProfile() {
 
         {/* Avatar flottant */}
         <div
+          role={isOwnProfile && isEditingProfile ? "button" : undefined}
+          tabIndex={isOwnProfile && isEditingProfile ? 0 : undefined}
           className={`absolute -bottom-10 left-6 ${isOwnProfile && isEditingProfile ? "cursor-pointer group" : ""}`}
           onClick={() => isOwnProfile && isEditingProfile && !isUploadingAvatar && avatarInputRef.current?.click()}
+          onKeyDown={(e) => { if (isOwnProfile && isEditingProfile && (e.key === "Enter" || e.key === " ")) avatarInputRef.current?.click() }}
           title={isOwnProfile && isEditingProfile ? "Changer la photo de profil" : undefined}
         >
           <img
@@ -154,8 +157,9 @@ function CreatorProfile() {
           {/* Prix abonnement (édition) */}
           {isOwnProfile && isEditingProfile && (
             <div className="flex items-center gap-2 mt-2">
-              <label className="text-sm text-slate-500 shrink-0">Prix abonnement :</label>
+              <label htmlFor="creator-sub-price" className="text-sm text-slate-500 shrink-0">Prix abonnement :</label>
               <input
+                id="creator-sub-price"
                 type="number"
                 min="0"
                 step="0.01"

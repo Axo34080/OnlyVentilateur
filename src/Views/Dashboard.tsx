@@ -216,8 +216,7 @@ function Dashboard() {
               </div>
               <div className="flex flex-col gap-1 md:col-span-2">
                 <label htmlFor="goodie-variants" className="text-xs font-medium text-slate-600">
-                  Variantes
-                  <span className="ml-1 font-normal text-slate-400">(facultatif — séparées par des virgules)</span>
+                  Variantes <span className="font-normal text-slate-400">(facultatif — séparées par des virgules)</span>
                 </label>
                 <input
                   id="goodie-variants"
