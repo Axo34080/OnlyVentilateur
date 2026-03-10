@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react"
+import { createContext, useContext, useMemo, useState } from "react"
 import type { ReactNode } from "react"
 
 export interface GoodieItem {
@@ -32,7 +32,7 @@ function makeCartKey(id: string, variant?: string): string {
   return variant ? `${id}|${variant}` : id
 }
 
-export function CartProvider({ children }: { children: ReactNode }) {
+export function CartProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [items, setItems] = useState<CartItem[]>([])
 
   const addItem = (goodie: GoodieItem) => {
@@ -67,8 +67,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0)
   const totalPrice = items.reduce((sum, i) => sum + i.price * i.quantity, 0)
 
+  const contextValue = useMemo(
+    () => ({ items, addItem, removeItem, updateQuantity, clearCart, totalItems, totalPrice }),
+    [items, addItem, removeItem, updateQuantity, clearCart, totalItems, totalPrice]
+  )
+
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, clearCart, totalItems, totalPrice }}>
+    <CartContext.Provider value={contextValue}>
       {children}
     </CartContext.Provider>
   )

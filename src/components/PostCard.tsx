@@ -3,12 +3,12 @@ import { useAuth } from "../context/AuthContext"
 import PremiumBlur from "./PremiumBlur"
 import type { Post } from "../types/Post"
 
-interface Props {
+type Props = Readonly<{
   post: Post
   isSubscribed?: boolean
   isLiked?: boolean
   onLike?: (postId: string) => void
-}
+}>
 
 function PostCard({ post, isSubscribed = false, isLiked = false, onLike }: Props) {
   const navigate = useNavigate()
@@ -16,16 +16,21 @@ function PostCard({ post, isSubscribed = false, isLiked = false, onLike }: Props
   const isOwnPost = user?.creatorId === post.creatorId
   const locked = post.isLocked && !isSubscribed && !isOwnPost
 
+  const handleNavigate = () => {
+    if (locked) {
+      navigate(token ? `/subscribe/${post.creatorId}` : "/login")
+    } else {
+      navigate(`/posts/${post.id}`)
+    }
+  }
+
   return (
     <div
+      role="button"
+      tabIndex={0}
       className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-      onClick={() => {
-        if (locked) {
-          navigate(token ? `/subscribe/${post.creatorId}` : "/login")
-        } else {
-          navigate(`/posts/${post.id}`)
-        }
-      }}
+      onClick={handleNavigate}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleNavigate() }}
     >
 
       {/* Image */}

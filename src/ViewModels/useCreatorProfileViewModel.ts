@@ -161,38 +161,40 @@ export function useCreatorProfileViewModel(creatorId: string): CreatorProfileVie
       return next
     })
 
+    const applyLikeResult = (result: { likes: number; isLiked: boolean }) => {
+      setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, likes: result.likes } : p)))
+      setLikedPostIds((prev) => {
+        const next = new Set(prev)
+        if (result.isLiked) next.add(postId)
+        else next.delete(postId)
+        return next
+      })
+    }
+
+    const revertLike = () => {
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId ? { ...p, likes: wasLiked ? p.likes + 1 : Math.max(0, p.likes - 1) } : p
+        )
+      )
+      setLikedPostIds((prev) => {
+        const next = new Set(prev)
+        if (wasLiked) next.add(postId)
+        else next.delete(postId)
+        return next
+      })
+    }
+
     fetch(`/api/posts/${postId}/like`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
-        if (!res.ok) throw new Error()
+        if (!res.ok) throw new Error("Like failed")
         return res.json()
       })
-      .then((result: { likes: number; isLiked: boolean }) => {
-        setPosts((prev) =>
-          prev.map((p) => (p.id === postId ? { ...p, likes: result.likes } : p))
-        )
-        setLikedPostIds((prev) => {
-          const next = new Set(prev)
-          if (result.isLiked) next.add(postId)
-          else next.delete(postId)
-          return next
-        })
-      })
-      .catch(() => {
-        setPosts((prev) =>
-          prev.map((p) =>
-            p.id === postId ? { ...p, likes: wasLiked ? p.likes + 1 : Math.max(0, p.likes - 1) } : p
-          )
-        )
-        setLikedPostIds((prev) => {
-          const next = new Set(prev)
-          if (wasLiked) next.add(postId)
-          else next.delete(postId)
-          return next
-        })
-      })
+      .then(applyLikeResult)
+      .catch(revertLike)
   }
 
   const isPostLiked = (postId: string) => likedPostIds.has(postId)
@@ -270,7 +272,7 @@ export function useCreatorProfileViewModel(creatorId: string): CreatorProfileVie
           displayName: profileForm.displayName || undefined,
           coverImage: profileForm.coverImage || undefined,
           subscriptionPrice: profileForm.subscriptionPrice
-            ? parseFloat(profileForm.subscriptionPrice)
+            ? Number.parseFloat(profileForm.subscriptionPrice)
             : undefined,
         }),
       })

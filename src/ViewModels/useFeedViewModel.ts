@@ -88,6 +88,30 @@ export function useFeedViewModel(): FeedViewModel {
 
   const getCreator = (creatorId: string) => creatorsMap.current.get(creatorId)
 
+  const applyLikeResult = (postId: string, result: { likes: number; isLiked: boolean }) => {
+    setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, likes: result.likes } : p)))
+    setLikedPostIds((prev) => {
+      const next = new Set(prev)
+      if (result.isLiked) next.add(postId)
+      else next.delete(postId)
+      return next
+    })
+  }
+
+  const revertLike = (postId: string, wasLiked: boolean) => {
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId ? { ...p, likes: wasLiked ? p.likes + 1 : Math.max(0, p.likes - 1) } : p
+      )
+    )
+    setLikedPostIds((prev) => {
+      const next = new Set(prev)
+      if (wasLiked) next.add(postId)
+      else next.delete(postId)
+      return next
+    })
+  }
+
   const handleLike = (postId: string) => {
     if (!token) return
 
@@ -110,33 +134,11 @@ export function useFeedViewModel(): FeedViewModel {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {
-        if (!res.ok) throw new Error()
+        if (!res.ok) throw new Error("Like failed")
         return res.json()
       })
-      .then((result: { likes: number; isLiked: boolean }) => {
-        setPosts((prev) =>
-          prev.map((p) => (p.id === postId ? { ...p, likes: result.likes } : p))
-        )
-        setLikedPostIds((prev) => {
-          const next = new Set(prev)
-          if (result.isLiked) next.add(postId)
-          else next.delete(postId)
-          return next
-        })
-      })
-      .catch(() => {
-        setPosts((prev) =>
-          prev.map((p) =>
-            p.id === postId ? { ...p, likes: wasLiked ? p.likes + 1 : Math.max(0, p.likes - 1) } : p
-          )
-        )
-        setLikedPostIds((prev) => {
-          const next = new Set(prev)
-          if (wasLiked) next.add(postId)
-          else next.delete(postId)
-          return next
-        })
-      })
+      .then((result: { likes: number; isLiked: boolean }) => applyLikeResult(postId, result))
+      .catch(() => revertLike(postId, wasLiked))
   }
 
   const isPostLiked = (postId: string) => likedPostIds.has(postId)

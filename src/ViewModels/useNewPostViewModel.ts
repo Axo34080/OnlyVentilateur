@@ -97,7 +97,7 @@ export function useNewPostViewModel(): NewPostViewModel {
       description: form.description.trim(),
       image: form.image.trim(),
       isLocked: form.isLocked,
-      price: form.isLocked && form.price ? parseFloat(form.price) : undefined,
+      price: form.isLocked && form.price ? Number.parseFloat(form.price) : undefined,
       tags: form.tags
         .split(",")
         .map((t) => t.trim())

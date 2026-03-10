@@ -18,7 +18,7 @@ interface ShopViewModel {
   checkoutError: string | null
   handleFilter: (creator: string) => void
   handleAddToCart: (goodie: GoodieItem) => void
-  handleCheckout: () => void
+  handleCheckout: () => Promise<void>
 }
 
 export function useShopViewModel(): ShopViewModel {
@@ -44,7 +44,7 @@ export function useShopViewModel(): ShopViewModel {
   useEffect(() => {
     setIsLoading(true)
     getGoodies()
-      .then((data) => setGoodies(data.map(goodieToCartItem)))
+      .then((data) => setGoodies(data.map((g) => goodieToCartItem(g))))
       .catch(() => {})
       .finally(() => setIsLoading(false))
   }, [])
@@ -69,7 +69,7 @@ export function useShopViewModel(): ShopViewModel {
     setCheckoutError(null)
     try {
       const url = await createOrderCheckout(items, token)
-      window.location.href = url
+      globalThis.location.href = url
     } catch {
       setCheckoutError("Erreur lors du paiement. Réessaie.")
       setIsCheckingOut(false)

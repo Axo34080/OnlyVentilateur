@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react"
+import { createContext, useContext, useMemo, useState } from "react"
 import type { ReactNode } from "react"
 import * as authService from "../services/authService"
 import type { User } from "../types/User"
@@ -26,7 +26,7 @@ function loadSession(): { user: User; token: string } | null {
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   const saved = loadSession()
   const [user, setUser] = useState<User | null>(saved?.user ?? null)
   const [token, setToken] = useState<string | null>(saved?.token ?? null)
@@ -66,10 +66,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
   }
 
+  const contextValue = useMemo(
+    () => ({ user, token, login, signup, logout, updateUser, isAuthenticated: !!token }),
+    [user, token, login, signup, logout, updateUser]
+  )
+
   return (
-    <AuthContext.Provider
-      value={{ user, token, login, signup, logout, updateUser, isAuthenticated: !!token }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   )

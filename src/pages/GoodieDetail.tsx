@@ -60,6 +60,14 @@ function GoodieDetail() {
   const cartKey = selectedVariant ? `${goodie.id}|${selectedVariant}` : goodie.id
   const inCart = items.find((i) => i.cartKey === cartKey)
 
+  let cartBtnClass = "bg-blue-600 hover:bg-blue-700 text-white"
+  if (added) cartBtnClass = "bg-green-100 text-green-700"
+  else if (inCart) cartBtnClass = "bg-blue-50 text-blue-600 border border-blue-200"
+
+  let cartBtnLabel: string = "Ajouter au panier"
+  if (added) cartBtnLabel = "Ajouté !"
+  else if (inCart) cartBtnLabel = `Dans le panier (×${inCart.quantity})`
+
   return (
     <div className="max-w-3xl mx-auto flex flex-col gap-6">
       <Link to="/shop" className="text-sm text-slate-400 hover:text-slate-700 transition-colors w-fit">
@@ -132,15 +140,9 @@ function GoodieDetail() {
               <button
                 onClick={handleAddToCart}
                 disabled={needsVariant}
-                className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                  added
-                    ? "bg-green-100 text-green-700"
-                    : inCart
-                    ? "bg-blue-50 text-blue-600 border border-blue-200"
-                    : "bg-blue-600 hover:bg-blue-700 text-white"
-                }`}
+                className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${cartBtnClass}`}
               >
-                {added ? "Ajouté !" : inCart ? `Dans le panier (×${inCart.quantity})` : "Ajouter au panier"}
+                {cartBtnLabel}
               </button>
             ) : (
               <span className="px-6 py-2.5 rounded-xl font-semibold text-sm bg-slate-100 text-slate-400">

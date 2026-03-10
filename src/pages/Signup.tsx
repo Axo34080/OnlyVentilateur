@@ -39,8 +39,9 @@ function Signup() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+            <label htmlFor="signup-email" className="block text-sm font-medium text-slate-700 mb-1">Email</label>
             <input
+              id="signup-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -51,8 +52,9 @@ function Signup() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Nom d'utilisateur</label>
+            <label htmlFor="signup-username" className="block text-sm font-medium text-slate-700 mb-1">Nom d'utilisateur</label>
             <input
+              id="signup-username"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -64,8 +66,9 @@ function Signup() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Mot de passe</label>
+            <label htmlFor="signup-password" className="block text-sm font-medium text-slate-700 mb-1">Mot de passe</label>
             <input
+              id="signup-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

@@ -48,17 +48,21 @@ function Feed() {
         </button>
       </div>
 
-      {error ? (
+      {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
           ⚠️ {error}
         </div>
-      ) : isLoading ? (
+      )}
+
+      {!error && isLoading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-slate-200 h-64 animate-pulse" />
+            <div key={`skeleton-${i}`} className="bg-white rounded-2xl border border-slate-200 h-64 animate-pulse" />
           ))}
         </div>
-      ) : visiblePosts.length === 0 ? (
+      )}
+
+      {!error && !isLoading && visiblePosts.length === 0 && (
         <div className="text-center py-16 text-slate-400">
           {filter === 'abonnements'
             ? "Tu n'es abonné à aucun créateur pour l'instant."
@@ -72,7 +76,9 @@ function Feed() {
             </div>
           )}
         </div>
-      ) : (
+      )}
+
+      {!error && !isLoading && visiblePosts.length > 0 && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {visiblePosts.map((post) => {
@@ -105,7 +111,7 @@ function Feed() {
           {isFetchingMore && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="bg-white rounded-2xl border border-slate-200 h-64 animate-pulse" />
+                <div key={`skeleton-${i}`} className="bg-white rounded-2xl border border-slate-200 h-64 animate-pulse" />
               ))}
             </div>
           )}

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState } from "react"
+import { createContext, useCallback, useContext, useMemo, useState } from "react"
 
 interface Toast {
   id: string
@@ -14,7 +14,7 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | null>(null)
 
-export function ToastProvider({ children }: { children: React.ReactNode }) {
+export function ToastProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   const [toasts, setToasts] = useState<Toast[]>([])
 
   const removeToast = useCallback((id: string) => {
@@ -27,8 +27,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setTimeout(() => removeToast(id), 3000)
   }, [removeToast])
 
+  const contextValue = useMemo(
+    () => ({ showToast, toasts, removeToast }),
+    [showToast, toasts, removeToast]
+  )
+
   return (
-    <ToastContext.Provider value={{ showToast, toasts, removeToast }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
     </ToastContext.Provider>
   )

@@ -2,9 +2,9 @@ import { Navigate } from "react-router-dom"
 import type { ReactNode } from "react"
 import { useAuth } from "../context/AuthContext"
 
-interface Props {
+type Props = Readonly<{
   children: ReactNode
-}
+}>
 
 function ProtectedRoute({ children }: Props) {
   const { isAuthenticated } = useAuth()

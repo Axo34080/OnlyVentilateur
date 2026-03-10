@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom"
 import type { Creator } from "../types/Creator"
 
-interface Props {
+type Props = Readonly<{
   creator: Creator
-}
+}>
 
 function CreatorCard({ creator }: Props) {
   return (

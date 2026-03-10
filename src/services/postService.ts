@@ -10,7 +10,7 @@ function mapCreator(c: any): Creator {
     avatar: c.avatar ?? "",
     coverImage: c.coverImage ?? "",
     bio: c.bio ?? "",
-    subscriptionPrice: parseFloat(c.subscriptionPrice),
+    subscriptionPrice: Number.parseFloat(c.subscriptionPrice),
     isPremium: c.isPremium,
   }
 }
@@ -52,7 +52,7 @@ function mapPost(p: any): Post {
     description: p.description,
     image: p.image,
     isLocked: p.isLocked,
-    price: p.price != null ? parseFloat(p.price) : undefined,
+    price: p.price !== null && p.price !== undefined ? Number.parseFloat(p.price) : undefined,
     likes: p.likes,
     tags: p.tags ?? [],
     createdAt: p.createdAt,

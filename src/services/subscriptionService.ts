@@ -36,7 +36,7 @@ function mapCreatorFromSub(c: any) {
     avatar: c.avatar ?? "",
     coverImage: c.coverImage ?? "",
     bio: c.bio ?? "",
-    subscriptionPrice: parseFloat(c.subscriptionPrice),
+    subscriptionPrice: Number.parseFloat(c.subscriptionPrice),
     isPremium: c.isPremium,
     subscriberCount: c.subscriberCount ?? 0,
     postCount: c.postCount ?? 0,

@@ -12,6 +12,8 @@ function UserProfile() {
     handleEditCreator, handleCancelCreator, handleSaveCreator, handleCreatorChange,
   } = useUserProfileViewModel()
 
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   // /profile → redirige vers la page créateur. /profile/edit → formulaire d'édition
   if (user?.creatorId && location.pathname === "/profile") {
     return <Navigate to={`/creators/${user.creatorId}`} replace />
@@ -20,8 +22,6 @@ function UserProfile() {
   if (!user?.creatorId && location.pathname === "/profile") {
     return <Navigate to="/dashboard" replace />
   }
-
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   if (!user) return null
 
@@ -33,8 +33,11 @@ function UserProfile() {
       {/* En-tête profil */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 flex items-center gap-6">
         <div
+          role="button"
+          tabIndex={0}
           className="relative shrink-0 cursor-pointer group"
           onClick={() => fileInputRef.current?.click()}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click() }}
           title="Changer la photo de profil"
         >
           {avatarSrc ? (
@@ -50,7 +53,11 @@ function UserProfile() {
         </div>
 
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
-          onChange={(e) => { const file = e.target.files?.[0]; if (file) handleAvatarChange(file); e.target.value = "" }}
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file) handleAvatarChange(file)
+            e.target.value = ""
+          }}
         />
 
         <div>
@@ -73,15 +80,15 @@ function UserProfile() {
 
         <div className="flex flex-col gap-3">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">{"Nom d'utilisateur"}</label>
-            <input type="text" value={isEditing ? form.username : user.username}
+            <label htmlFor="profile-username" className="block text-sm font-medium text-slate-700 mb-1">{"Nom d'utilisateur"}</label>
+            <input id="profile-username" type="text" value={isEditing ? form.username : user.username}
               onChange={(e) => handleChange("username", e.target.value)} disabled={!isEditing}
               className="w-full px-4 py-2.5 rounded-lg border border-slate-300 disabled:bg-slate-50 disabled:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Bio</label>
-            <textarea value={isEditing ? form.bio : (user.bio ?? "")}
+            <label htmlFor="profile-bio" className="block text-sm font-medium text-slate-700 mb-1">Bio</label>
+            <textarea id="profile-bio" value={isEditing ? form.bio : (user.bio ?? "")}
               onChange={(e) => handleChange("bio", e.target.value)} disabled={!isEditing}
               rows={3} placeholder="Parle de toi et de tes ventilateurs..."
               className="w-full px-4 py-2.5 rounded-lg border border-slate-300 disabled:bg-slate-50 disabled:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 resize-none"
@@ -138,16 +145,16 @@ function UserProfile() {
 
             <div className="flex flex-col gap-3">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">{"Nom d'affichage"}</label>
-                <input type="text"
+                <label htmlFor="creator-displayname" className="block text-sm font-medium text-slate-700 mb-1">{"Nom d'affichage"}</label>
+                <input id="creator-displayname" type="text"
                   value={isEditingCreator ? creatorForm.displayName : (creatorData?.displayName ?? "")}
                   onChange={(e) => handleCreatorChange("displayName", e.target.value)} disabled={!isEditingCreator}
                   className="w-full px-4 py-2.5 rounded-lg border border-slate-300 disabled:bg-slate-50 disabled:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">URL photo de couverture</label>
-                <input type="url"
+                <label htmlFor="creator-cover" className="block text-sm font-medium text-slate-700 mb-1">URL photo de couverture</label>
+                <input id="creator-cover" type="url"
                   value={isEditingCreator ? creatorForm.coverImage : (creatorData?.coverImage ?? "")}
                   onChange={(e) => handleCreatorChange("coverImage", e.target.value)} disabled={!isEditingCreator}
                   placeholder="https://..."
@@ -155,8 +162,8 @@ function UserProfile() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Prix abonnement (€/mois)</label>
-                <input type="number" min="0" step="0.01"
+                <label htmlFor="creator-price" className="block text-sm font-medium text-slate-700 mb-1">Prix abonnement (€/mois)</label>
+                <input id="creator-price" type="number" min="0" step="0.01"
                   value={isEditingCreator ? creatorForm.subscriptionPrice : (creatorData?.subscriptionPrice?.toString() ?? "")}
                   onChange={(e) => handleCreatorChange("subscriptionPrice", e.target.value)} disabled={!isEditingCreator}
                   className="w-full px-4 py-2.5 rounded-lg border border-slate-300 disabled:bg-slate-50 disabled:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"

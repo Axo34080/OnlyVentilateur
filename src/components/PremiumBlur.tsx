@@ -1,9 +1,9 @@
 import type { ReactNode } from "react"
 
-interface Props {
+type Props = Readonly<{
   isLocked: boolean
   children: ReactNode
-}
+}>
 
 function PremiumBlur({ isLocked, children }: Props) {
   if (!isLocked) return <>{children}</>

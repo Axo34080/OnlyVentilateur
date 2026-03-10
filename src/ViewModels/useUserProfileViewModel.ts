@@ -196,7 +196,7 @@ export function useUserProfileViewModel(): UserProfileViewModel {
           displayName: creatorForm.displayName || undefined,
           coverImage: creatorForm.coverImage || undefined,
           subscriptionPrice: creatorForm.subscriptionPrice
-            ? parseFloat(creatorForm.subscriptionPrice)
+            ? Number.parseFloat(creatorForm.subscriptionPrice)
             : undefined,
         }),
       })

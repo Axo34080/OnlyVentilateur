@@ -23,10 +23,11 @@ function NewPost() {
 
       <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col gap-4">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label htmlFor="post-title" className="block text-sm font-medium text-slate-700 mb-1">
             Titre <span className="text-red-500">*</span>
           </label>
           <input
+            id="post-title"
             type="text"
             value={form.title}
             onChange={(e) => handleChange("title", e.target.value)}
@@ -36,8 +37,9 @@ function NewPost() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+          <label htmlFor="post-description" className="block text-sm font-medium text-slate-700 mb-1">Description</label>
           <textarea
+            id="post-description"
             value={form.description}
             onChange={(e) => handleChange("description", e.target.value)}
             placeholder="Parle de ton contenu..."
@@ -97,10 +99,11 @@ function NewPost() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">
+          <label htmlFor="post-tags" className="block text-sm font-medium text-slate-700 mb-1">
             Tags <span className="text-slate-400 font-normal">(séparés par des virgules)</span>
           </label>
           <input
+            id="post-tags"
             type="text"
             value={form.tags}
             onChange={(e) => handleChange("tags", e.target.value)}
@@ -111,8 +114,9 @@ function NewPost() {
 
         {/* Section premium */}
         <div className="border-t border-slate-100 pt-4">
-          <label className="flex items-center gap-3 cursor-pointer">
+          <label htmlFor="post-locked" className="flex items-center gap-3 cursor-pointer">
             <input
+              id="post-locked"
               type="checkbox"
               checked={form.isLocked}
               onChange={(e) => handleChange("isLocked", e.target.checked)}
@@ -126,10 +130,11 @@ function NewPost() {
 
           {form.isLocked && (
             <div className="mt-3">
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="post-price" className="block text-sm font-medium text-slate-700 mb-1">
                 Prix unitaire optionnel (€)
               </label>
               <input
+                id="post-price"
                 type="number"
                 min="0"
                 step="0.01"

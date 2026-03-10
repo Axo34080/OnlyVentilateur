@@ -1,11 +1,10 @@
 import { useRef } from "react"
 import { useNavigate } from "react-router-dom"
-import { useAuth } from "../context/AuthContext"
 import { useDashboardViewModel } from "../ViewModels/useDashboardViewModel"
 import type { Goodie } from "../services/goodiesService"
 
 function Dashboard() {
-  const { user } = useAuth()
+
   const {
     creator, posts, isLoading, error, handleDeletePost,
     goodies, goodiesLoading, goodieForm, editingGoodieId, newGoodieOpen, isSavingGoodie,
@@ -148,8 +147,9 @@ function Dashboard() {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-slate-600">Nom *</label>
+                <label htmlFor="goodie-name" className="text-xs font-medium text-slate-600">Nom *</label>
                 <input
+                  id="goodie-name"
                   type="text"
                   value={goodieForm.name}
                   onChange={(e) => handleGoodieFormChange("name", e.target.value)}
@@ -158,8 +158,9 @@ function Dashboard() {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-slate-600">Prix (€) *</label>
+                <label htmlFor="goodie-price" className="text-xs font-medium text-slate-600">Prix (€) *</label>
                 <input
+                  id="goodie-price"
                   type="number"
                   min="0"
                   step="0.01"
@@ -170,8 +171,9 @@ function Dashboard() {
                 />
               </div>
               <div className="flex flex-col gap-1 md:col-span-2">
-                <label className="text-xs font-medium text-slate-600">Description</label>
+                <label htmlFor="goodie-description" className="text-xs font-medium text-slate-600">Description</label>
                 <input
+                  id="goodie-description"
                   type="text"
                   value={goodieForm.description}
                   onChange={(e) => handleGoodieFormChange("description", e.target.value)}
@@ -180,7 +182,7 @@ function Dashboard() {
                 />
               </div>
               <div className="flex flex-col gap-1 md:col-span-2">
-                <label className="text-xs font-medium text-slate-600">Image *</label>
+                <label htmlFor="goodie-image-url" className="text-xs font-medium text-slate-600">Image *</label>
                 <div className="flex items-center gap-3">
                   {goodieForm.image && (
                     <img src={goodieForm.image} alt="preview" className="w-14 h-14 rounded-lg object-cover shrink-0 bg-slate-100" />
@@ -195,6 +197,7 @@ function Dashboard() {
                       {isUploadingGoodieImage ? "Téléversement..." : "Choisir un fichier"}
                     </button>
                     <input
+                      id="goodie-image-url"
                       type="text"
                       value={goodieForm.image}
                       onChange={(e) => handleGoodieFormChange("image", e.target.value)}
@@ -212,11 +215,12 @@ function Dashboard() {
                 />
               </div>
               <div className="flex flex-col gap-1 md:col-span-2">
-                <label className="text-xs font-medium text-slate-600">
+                <label htmlFor="goodie-variants" className="text-xs font-medium text-slate-600">
                   Variantes
                   <span className="ml-1 font-normal text-slate-400">(facultatif — séparées par des virgules)</span>
                 </label>
                 <input
+                  id="goodie-variants"
                   type="text"
                   value={goodieForm.variants}
                   onChange={(e) => handleGoodieFormChange("variants", e.target.value)}

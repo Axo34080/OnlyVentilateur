@@ -46,7 +46,7 @@ function Subscribe() {
     setError(null)
     try {
       const url = await createSubscriptionCheckout(creatorId, token)
-      window.location.href = url
+      globalThis.location.href = url
     } catch {
       setError("Erreur lors du paiement. Réessaie.")
       setIsCheckingOut(false)
