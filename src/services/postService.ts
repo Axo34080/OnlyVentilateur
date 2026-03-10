@@ -15,8 +15,10 @@ function mapCreator(c: any): Creator {
   }
 }
 
-export async function getPosts(): Promise<{ posts: Post[]; creators: Creator[] }> {
-  const res = await fetch("/api/posts")
+export async function getPosts(token?: string | null): Promise<{ posts: Post[]; creators: Creator[] }> {
+  const res = await fetch("/api/posts", {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
   if (!res.ok) throw new Error("Erreur lors du chargement des posts")
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data: any[] = await res.json()

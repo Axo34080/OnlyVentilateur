@@ -26,7 +26,7 @@ function PostDetail() {
     if (!id) return
     const load = async () => {
       try {
-        const data = await getPostById(id)
+        const data = await getPostById(id, token)
         setPost(data)
         setLikes(data.likes)
         if (token) {

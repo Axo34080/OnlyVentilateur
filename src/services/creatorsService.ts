@@ -52,8 +52,10 @@ export async function getCreators(): Promise<Creator[]> {
   return data.map(mapCreator)
 }
 
-export async function getPostById(id: string): Promise<Post & { creator: Creator }> {
-  const res = await fetch(`/api/posts/${id}`)
+export async function getPostById(id: string, token?: string | null): Promise<Post & { creator: Creator }> {
+  const res = await fetch(`/api/posts/${id}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
   if (!res.ok) throw new Error("Post introuvable")
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const p: any = await res.json()

@@ -52,7 +52,7 @@ export function useFeedViewModel(): FeedViewModel {
   }, [token])
 
   useEffect(() => {
-    getPosts()
+    getPosts(token)
       .then(({ posts, creators }) => {
         creators.forEach((c) => creatorsMap.current.set(c.id, c))
         const sorted = [...posts].sort((a, b) =>
@@ -62,7 +62,7 @@ export function useFeedViewModel(): FeedViewModel {
       })
       .catch(() => setError("Une erreur est survenue lors du chargement. Réessaie dans quelques instants."))
       .finally(() => setIsLoading(false))
-  }, [])
+  }, [token])
 
   const setFilter = (newFilter: FeedFilter) => {
     setFilterState(newFilter)
