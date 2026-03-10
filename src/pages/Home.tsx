@@ -20,8 +20,13 @@ function Home() {
 
       {/* Hero */}
       <section className="flex flex-col items-center text-center py-16 gap-6">
+        <img
+          src="/image_2026-03-10_110143029-removebg-preview.png"
+          alt="Logo OnlyVentilateur"
+          className="h-24 w-24 object-contain"
+        />
         <h1 className="text-6xl font-bold text-slate-900">
-          🌀 OnlyVentilateur
+          OnlyVentilateur
         </h1>
         <p className="text-xl text-slate-600 max-w-lg">
           La plateforme exclusive des créateurs de contenu ventilateur.

@@ -5,6 +5,8 @@ import { useToast } from "../context/ToastContext"
 import { getCreatorById, getLikedPostIds } from "../services/creatorsService"
 import { unsubscribe, getUserSubscriptions, getSubscribedCreators } from "../services/subscriptionService"
 import { uploadFile } from "../services/uploadService"
+import { getGoodies } from "../services/goodiesService"
+import type { Goodie } from "../services/goodiesService"
 import type { Creator } from "../types/Creator"
 import type { Post } from "../types/Post"
 
@@ -19,6 +21,7 @@ interface ProfileForm {
 interface CreatorProfileViewModel {
   creator: Creator | null
   posts: Post[]
+  goodies: Goodie[]
   isSubscribed: boolean
   isCheckingSubscription: boolean
   isLoading: boolean
@@ -73,6 +76,7 @@ export function useCreatorProfileViewModel(creatorId: string): CreatorProfileVie
     subscriptionPrice: "",
   })
   const [subscriptions, setSubscriptions] = useState<Creator[]>([])
+  const [goodies, setGoodies] = useState<Goodie[]>([])
 
   const isOwnProfile = !!user?.creatorId && user.creatorId === creatorId
 
@@ -121,6 +125,12 @@ export function useCreatorProfileViewModel(creatorId: string): CreatorProfileVie
     if (!token || !user?.creatorId || user.creatorId !== creatorId) return
     getSubscribedCreators(token).then(setSubscriptions).catch(() => {})
   }, [token, user?.creatorId, creatorId])
+
+  // Charger les goodies du créateur
+  useEffect(() => {
+    if (!creatorId) return
+    getGoodies(creatorId).then(setGoodies).catch(() => {})
+  }, [creatorId])
 
   const handleSubscribe = async () => {
     if (!token) {
@@ -314,7 +324,7 @@ export function useCreatorProfileViewModel(creatorId: string): CreatorProfileVie
   }
 
   return {
-    creator, posts, isSubscribed, isCheckingSubscription, isLoading, error, isOwnProfile,
+    creator, posts, goodies, isSubscribed, isCheckingSubscription, isLoading, error, isOwnProfile,
     isEditingProfile, isSavingProfile, profileForm, profileError, subscriptions,
     isUploadingAvatar, isUploadingCover,
     handleEditProfile, handleCancelEditProfile, handleSaveProfile, handleProfileChange,

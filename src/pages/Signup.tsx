@@ -33,7 +33,10 @@ function Signup() {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
 
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-900">🌀 OnlyVentilateur</h1>
+          <div className="flex items-center justify-center gap-3 mb-1">
+            <img src="/image_2026-03-10_110143029-removebg-preview.png" alt="" className="h-10 w-10 object-contain" />
+            <h1 className="text-3xl font-bold text-slate-900">OnlyVentilateur</h1>
+          </div>
           <p className="text-slate-500 mt-2">Rejoins la communauté ventilateur.</p>
         </div>
 

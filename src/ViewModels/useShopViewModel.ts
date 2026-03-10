@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useSearchParams } from "react-router-dom"
+import { useSearchParams, useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { useCart } from "../context/CartContext"
 import type { GoodieItem } from "../context/CartContext"
@@ -24,6 +24,7 @@ interface ShopViewModel {
 export function useShopViewModel(): ShopViewModel {
   const { token } = useAuth()
   const { addItem, items, clearCart } = useCart()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [filter, setFilter] = useState("Tous")
   const [addedId, setAddedId] = useState<string | null>(null)
@@ -64,7 +65,7 @@ export function useShopViewModel(): ShopViewModel {
 
   const handleCheckout = async () => {
     if (items.length === 0) return
-    if (!token) { setCheckoutError("Connecte-toi pour commander."); return }
+    if (!token) { navigate("/login"); return }
     setIsCheckingOut(true)
     setCheckoutError(null)
     try {

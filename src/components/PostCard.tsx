@@ -35,11 +35,13 @@ function PostCard({ post, isSubscribed = false, isLiked = false, onLike }: Props
 
       {/* Image */}
       <PremiumBlur isLocked={locked}>
-        <img
-          src={post.image}
-          alt={post.title}
-          className="w-full h-52 object-cover"
-        />
+        {post.image ? (
+          <img src={post.image} alt={post.title} className="w-full h-52 object-cover" />
+        ) : (
+          <div className="w-full h-52 bg-slate-100 flex items-center justify-center">
+            <span className="text-4xl opacity-30">🔒</span>
+          </div>
+        )}
       </PremiumBlur>
 
       {/* Contenu */}

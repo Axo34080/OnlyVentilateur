@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState } from "react"
+import { createContext, useContext, useEffect, useMemo, useState } from "react"
 import type { ReactNode } from "react"
 
 export interface GoodieItem {
@@ -28,12 +28,27 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | null>(null)
 
+const CART_KEY = "onlyventilateur_cart"
+
+function loadCart(): CartItem[] {
+  try {
+    const raw = localStorage.getItem(CART_KEY)
+    return raw ? (JSON.parse(raw) as CartItem[]) : []
+  } catch {
+    return []
+  }
+}
+
 function makeCartKey(id: string, variant?: string): string {
   return variant ? `${id}|${variant}` : id
 }
 
 export function CartProvider({ children }: Readonly<{ children: ReactNode }>) {
-  const [items, setItems] = useState<CartItem[]>([])
+  const [items, setItems] = useState<CartItem[]>(loadCart)
+
+  useEffect(() => {
+    localStorage.setItem(CART_KEY, JSON.stringify(items))
+  }, [items])
 
   const addItem = (goodie: GoodieItem) => {
     const key = makeCartKey(goodie.id, goodie.variant)

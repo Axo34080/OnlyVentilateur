@@ -3,12 +3,12 @@ import { useParams, Navigate, Link } from "react-router-dom"
 import { useCreatorProfileViewModel } from "../ViewModels/useCreatorProfileViewModel"
 import PostCard from "../components/PostCard"
 
-type Tab = "posts" | "about" | "subs"
+type Tab = "posts" | "shop" | "about" | "subs"
 
 function CreatorProfile() {
   const { id } = useParams<{ id: string }>()
   const {
-    creator, posts, isSubscribed, isCheckingSubscription, isLoading, error, isOwnProfile,
+    creator, posts, goodies, isSubscribed, isCheckingSubscription, isLoading, error, isOwnProfile,
     isEditingProfile, isSavingProfile, profileForm, profileError, subscriptions,
     isUploadingAvatar, isUploadingCover,
     handleEditProfile, handleCancelEditProfile, handleSaveProfile, handleProfileChange,
@@ -35,6 +35,7 @@ function CreatorProfile() {
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "posts", label: `Publications (${posts.length})` },
+    ...(goodies.length > 0 ? [{ key: "shop" as Tab, label: `Boutique (${goodies.length})` }] : []),
     { key: "about", label: "À propos" },
     ...(isOwnProfile ? [{ key: "subs" as Tab, label: "Mes abonnements" }] : []),
   ]
@@ -285,6 +286,33 @@ function CreatorProfile() {
             ))}
           </div>
         )
+      )}
+
+      {/* Onglet Boutique */}
+      {activeTab === "shop" && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {goodies.map((goodie) => (
+            <Link
+              key={goodie.id}
+              to={`/shop/${goodie.id}`}
+              className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+            >
+              <img src={goodie.image} alt={goodie.name} className="w-full h-40 object-cover" />
+              <div className="p-4 flex flex-col gap-1">
+                <h3 className="font-semibold text-slate-900 text-sm leading-snug">{goodie.name}</h3>
+                {goodie.description && (
+                  <p className="text-xs text-slate-500 line-clamp-2">{goodie.description}</p>
+                )}
+                <div className="flex items-center justify-between mt-2">
+                  <span className="font-bold text-blue-600">{Number(goodie.price).toFixed(2)} €</span>
+                  {!goodie.inStock && (
+                    <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Rupture</span>
+                  )}
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
       )}
 
       {/* Onglet À propos */}

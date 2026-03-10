@@ -81,7 +81,7 @@ function Subscribe() {
   if (subscribeSuccess) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
-        <div className="text-5xl">🌀</div>
+        <img src="/image_2026-03-10_110143029-removebg-preview.png" alt="" className="h-16 w-16 object-contain" />
         <h1 className="text-2xl font-bold text-slate-900">Abonnement confirmé !</h1>
         <p className="text-slate-500">
           Tu es maintenant abonné à <span className="font-semibold">{creator.displayName}</span>.

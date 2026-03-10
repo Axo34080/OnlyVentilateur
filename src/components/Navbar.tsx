@@ -29,8 +29,9 @@ function Navbar() {
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
 
         {/* Logo */}
-        <Link to="/" className="font-bold text-slate-900 text-lg">
-          🌀 OnlyVentilateur
+        <Link to="/" className="flex items-center gap-2 font-bold text-slate-900 text-lg">
+          <img src="/image_2026-03-10_110143029-removebg-preview.png" alt="" className="h-8 w-8 object-contain" />
+          OnlyVentilateur
         </Link>
 
         {/* Liens + actions */}

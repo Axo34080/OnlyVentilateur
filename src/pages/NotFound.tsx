@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 function NotFound() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center">
-      <div className="text-6xl">🌀</div>
+      <img src="/image_2026-03-10_110143029-removebg-preview.png" alt="" className="h-20 w-20 object-contain opacity-50" />
       <div>
         <h1 className="text-4xl font-bold text-slate-900">404</h1>
         <p className="text-slate-500 mt-2">Cette page n'existe pas ou a été emportée par un courant d'air.</p>

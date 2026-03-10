@@ -3,7 +3,7 @@ export interface Post {
   creatorId: string
   title: string
   description: string
-  image: string
+  image: string | null
   isLocked: boolean
   price?: number
   likes: number
