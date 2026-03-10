@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react"
+import { useSearchParams } from "react-router-dom"
+import { useAuth } from "../context/AuthContext"
 import { useCart } from "../context/CartContext"
 import type { GoodieItem } from "../context/CartContext"
 import { getGoodies, goodieToCartItem } from "../services/goodiesService"
+import { createOrderCheckout } from "../services/checkoutService"
 
 interface ShopViewModel {
   goodies: GoodieItem[]
@@ -12,19 +15,31 @@ interface ShopViewModel {
   isLoading: boolean
   isCheckingOut: boolean
   checkoutSuccess: boolean
+  checkoutError: string | null
   handleFilter: (creator: string) => void
   handleAddToCart: (goodie: GoodieItem) => void
   handleCheckout: () => void
 }
 
 export function useShopViewModel(): ShopViewModel {
-  const { addItem, items, totalPrice, clearCart } = useCart()
+  const { token } = useAuth()
+  const { addItem, items, clearCart } = useCart()
+  const [searchParams] = useSearchParams()
   const [filter, setFilter] = useState("Tous")
   const [addedId, setAddedId] = useState<string | null>(null)
   const [isCheckingOut, setIsCheckingOut] = useState(false)
   const [checkoutSuccess, setCheckoutSuccess] = useState(false)
+  const [checkoutError, setCheckoutError] = useState<string | null>(null)
   const [goodies, setGoodies] = useState<GoodieItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
+
+  // Détection retour Stripe
+  useEffect(() => {
+    if (searchParams.get("payment") === "success") {
+      clearCart()
+      setCheckoutSuccess(true)
+    }
+  }, [searchParams, clearCart])
 
   useEffect(() => {
     setIsLoading(true)
@@ -47,17 +62,19 @@ export function useShopViewModel(): ShopViewModel {
     setTimeout(() => setAddedId(null), 1500)
   }
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (items.length === 0) return
+    if (!token) { setCheckoutError("Connecte-toi pour commander."); return }
     setIsCheckingOut(true)
-    setTimeout(() => {
-      clearCart()
+    setCheckoutError(null)
+    try {
+      const url = await createOrderCheckout(items, token)
+      window.location.href = url
+    } catch {
+      setCheckoutError("Erreur lors du paiement. Réessaie.")
       setIsCheckingOut(false)
-      setCheckoutSuccess(true)
-    }, 1500)
+    }
   }
-
-  void totalPrice
 
   return {
     goodies,
@@ -68,6 +85,7 @@ export function useShopViewModel(): ShopViewModel {
     isLoading,
     isCheckingOut,
     checkoutSuccess,
+    checkoutError,
     handleFilter,
     handleAddToCart,
     handleCheckout,

@@ -11,6 +11,7 @@ function GoodieDetail() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [added, setAdded] = useState(false)
+  const [selectedVariant, setSelectedVariant] = useState<string | null>(null)
 
   useEffect(() => {
     if (!id) return
@@ -20,9 +21,12 @@ function GoodieDetail() {
       .finally(() => setIsLoading(false))
   }, [id])
 
+  const hasVariants = (goodie?.variants?.length ?? 0) > 0
+  const needsVariant = hasVariants && !selectedVariant
+
   const handleAddToCart = () => {
-    if (!goodie) return
-    addItem(goodieToCartItem(goodie))
+    if (!goodie || needsVariant) return
+    addItem(goodieToCartItem(goodie, selectedVariant ?? undefined))
     setAdded(true)
     setTimeout(() => setAdded(false), 1500)
   }
@@ -53,7 +57,8 @@ function GoodieDetail() {
     )
   }
 
-  const inCart = items.find((i) => i.id === goodie.id)
+  const cartKey = selectedVariant ? `${goodie.id}|${selectedVariant}` : goodie.id
+  const inCart = items.find((i) => i.cartKey === cartKey)
 
   return (
     <div className="max-w-3xl mx-auto flex flex-col gap-6">
@@ -88,13 +93,46 @@ function GoodieDetail() {
             <p className="text-slate-600 text-sm leading-relaxed">{goodie.description}</p>
           )}
 
+          {/* Sélecteur de variante */}
+          {hasVariants && (
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-slate-700">
+                {goodie.variants![0].match(/^(S|M|L|XL|XXL|S\/M|L\/XL)$/)
+                  ? "Taille"
+                  : "Coloris"}
+                {selectedVariant && (
+                  <span className="ml-2 font-semibold text-slate-900">{selectedVariant}</span>
+                )}
+              </span>
+              <div className="flex gap-2 flex-wrap">
+                {goodie.variants!.map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setSelectedVariant(v)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium border-2 transition-colors ${
+                      selectedVariant === v
+                        ? "border-blue-600 bg-blue-50 text-blue-700"
+                        : "border-slate-200 text-slate-700 hover:border-slate-300"
+                    }`}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+              {needsVariant && (
+                <p className="text-xs text-amber-600">Sélectionne une option avant d'ajouter au panier.</p>
+              )}
+            </div>
+          )}
+
           <div className="flex items-center gap-4 mt-auto pt-4 border-t border-slate-100">
             <span className="text-3xl font-bold text-slate-900">{Number(goodie.price).toFixed(2)} €</span>
 
             {goodie.inStock ? (
               <button
                 onClick={handleAddToCart}
-                className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-colors ${
+                disabled={needsVariant}
+                className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
                   added
                     ? "bg-green-100 text-green-700"
                     : inCart

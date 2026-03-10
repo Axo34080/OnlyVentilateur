@@ -4,7 +4,7 @@ import { useFeedViewModel } from "../ViewModels/useFeedViewModel"
 import PostCard from "../components/PostCard"
 
 function Feed() {
-  const { visiblePosts, getCreator, handleLike, isPostLiked, isLoading, isFetchingMore, hasMore, loadMore, error, filter, setFilter } = useFeedViewModel()
+  const { visiblePosts, getCreator, handleLike, isPostLiked, isCreatorSubscribed, isLoading, isFetchingMore, hasMore, loadMore, error, filter, setFilter } = useFeedViewModel()
   const sentinelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -93,7 +93,7 @@ function Feed() {
                       <span className="text-xs text-slate-400">{creator.username}</span>
                     </Link>
                   )}
-                  <PostCard post={post} isSubscribed={false} isLiked={isPostLiked(post.id)} onLike={handleLike} />
+                  <PostCard post={post} isSubscribed={isCreatorSubscribed(post.creatorId)} isLiked={isPostLiked(post.id)} onLike={handleLike} />
                 </div>
               )
             })}

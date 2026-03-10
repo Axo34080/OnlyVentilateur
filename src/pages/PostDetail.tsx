@@ -2,20 +2,21 @@ import { useState, useEffect, useRef } from "react"
 import { useParams, Link, Navigate } from "react-router-dom"
 import { getPostById, getLikedPostIds } from "../services/creatorsService"
 import { getComments, addComment } from "../services/commentsService"
+import { getUserSubscriptions } from "../services/subscriptionService"
 import { useAuth } from "../context/AuthContext"
-import PremiumBlur from "../components/PremiumBlur"
 import type { Post } from "../types/Post"
 import type { Creator } from "../types/Creator"
 import type { Comment } from "../services/commentsService"
 
 function PostDetail() {
   const { id } = useParams<{ id: string }>()
-  const { token } = useAuth()
+  const { token, user } = useAuth()
   const [post, setPost] = useState<(Post & { creator: Creator }) | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(false)
   const [likes, setLikes] = useState(0)
   const [isLiked, setIsLiked] = useState(false)
+  const [isSubscribed, setIsSubscribed] = useState(false)
   const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -23,21 +24,28 @@ function PostDetail() {
 
   useEffect(() => {
     if (!id) return
-    getPostById(id)
-      .then((data) => {
+    const load = async () => {
+      try {
+        const data = await getPostById(id)
         setPost(data)
         setLikes(data.likes)
-      })
-      .catch(() => setError(true))
-      .finally(() => setIsLoading(false))
-  }, [id])
-
-  useEffect(() => {
-    if (!token || !id) return
-    getLikedPostIds(token)
-      .then((ids) => setIsLiked(ids.includes(id)))
-      .catch(() => {})
-  }, [token, id])
+        if (token) {
+          // Erreurs subscription/likes isolées — ne bloquent pas l'affichage du post
+          const [subs, likedIds] = await Promise.allSettled([
+            getUserSubscriptions(token),
+            getLikedPostIds(token),
+          ])
+          if (subs.status === "fulfilled") setIsSubscribed(subs.value.includes(data.creator.id))
+          if (likedIds.status === "fulfilled") setIsLiked(likedIds.value.includes(id))
+        }
+      } catch {
+        setError(true)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    load()
+  }, [id, token])
 
   useEffect(() => {
     if (!id) return
@@ -93,7 +101,75 @@ function PostDetail() {
 
   if (error || !post) return <Navigate to="/feed" replace />
 
-  const locked = post.isLocked && !token
+  const isOwnPost = user?.creatorId === post.creator.id
+  const locked = post.isLocked && !isSubscribed && !isOwnPost
+
+  // Page CTA abonnement si contenu verrouillé
+  if (locked) {
+    return (
+      <div className="max-w-2xl mx-auto flex flex-col gap-6">
+        <div className="flex items-center gap-2 text-sm text-slate-400">
+          <Link to="/feed" className="hover:text-slate-700 transition-colors">Fil</Link>
+          <span>/</span>
+          <Link to={`/creators/${post.creator.id}`} className="hover:text-slate-700 transition-colors">
+            {post.creator.displayName}
+          </Link>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+          {/* Image floutée */}
+          <div className="relative">
+            <img
+              src={post.image}
+              alt={post.title}
+              className="w-full object-cover max-h-[320px] blur-sm scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/70 flex flex-col items-center justify-center gap-3">
+              <span className="text-4xl">🔒</span>
+              <span className="text-white text-lg font-bold">Contenu premium</span>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="p-8 flex flex-col items-center gap-5 text-center">
+            <Link to={`/creators/${post.creator.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+              <img src={post.creator.avatar} alt={post.creator.displayName} className="w-12 h-12 rounded-full object-cover" />
+              <div className="text-left">
+                <div className="font-bold text-slate-900">{post.creator.displayName}</div>
+                <div className="text-sm text-slate-400">@{post.creator.username}</div>
+              </div>
+            </Link>
+
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 mb-1">{post.title}</h2>
+              <p className="text-slate-500 text-sm">Ce post est réservé aux abonnés de {post.creator.displayName}.</p>
+            </div>
+
+            <div className="flex flex-col gap-3 w-full max-w-xs">
+              {token ? (
+                <Link
+                  to={`/subscribe/${post.creator.id}`}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl text-sm transition-colors text-center"
+                >
+                  S'abonner — {post.creator.subscriptionPrice.toFixed(2)} €/mois
+                </Link>
+              ) : (
+                <Link
+                  to="/login"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl text-sm transition-colors text-center"
+                >
+                  Se connecter pour s'abonner
+                </Link>
+              )}
+              <Link to="/feed" className="text-sm text-slate-400 hover:text-slate-600 transition-colors">
+                ← Retour au fil
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-6">
@@ -126,13 +202,11 @@ function PostDetail() {
       </Link>
 
       {/* Image */}
-      <PremiumBlur isLocked={locked}>
-        <img
-          src={post.image}
-          alt={post.title}
-          className="w-full rounded-2xl object-cover max-h-[480px]"
-        />
-      </PremiumBlur>
+      <img
+        src={post.image}
+        alt={post.title}
+        className="w-full rounded-2xl object-cover max-h-[480px]"
+      />
 
       {/* Contenu */}
       <div className="flex flex-col gap-4">
@@ -149,7 +223,11 @@ function PostDetail() {
           </button>
         </div>
 
-        <p className="text-slate-600 leading-relaxed">{post.description}</p>
+        {locked ? (
+          <p className="text-slate-400 italic text-sm">Abonnez-vous pour lire la description complète.</p>
+        ) : (
+          <p className="text-slate-600 leading-relaxed">{post.description}</p>
+        )}
 
         {/* Tags */}
         {post.tags.length > 0 && (

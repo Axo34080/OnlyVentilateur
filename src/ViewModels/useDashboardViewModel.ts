@@ -15,9 +15,10 @@ interface GoodieForm {
   price: string
   image: string
   inStock: boolean
+  variants: string
 }
 
-const emptyForm: GoodieForm = { name: "", description: "", price: "", image: "", inStock: true }
+const emptyForm: GoodieForm = { name: "", description: "", price: "", image: "", inStock: true, variants: "" }
 
 interface DashboardViewModel {
   creator: Creator | null
@@ -131,6 +132,7 @@ export function useDashboardViewModel(): DashboardViewModel {
       price: String(goodie.price),
       image: goodie.image,
       inStock: goodie.inStock,
+      variants: goodie.variants?.join(", ") ?? "",
     })
     setEditingGoodieId(goodie.id)
     setNewGoodieOpen(false)
@@ -146,12 +148,17 @@ export function useDashboardViewModel(): DashboardViewModel {
     if (!token) return
     setIsSavingGoodie(true)
     try {
+      const parsedVariants = goodieForm.variants
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
       const data = {
         name: goodieForm.name,
         description: goodieForm.description || undefined,
         price: Number.parseFloat(goodieForm.price),
         image: goodieForm.image,
         inStock: goodieForm.inStock,
+        variants: parsedVariants.length > 0 ? parsedVariants : undefined,
       }
       if (editingGoodieId) {
         const updated = await updateGoodie(editingGoodieId, data, token)

@@ -15,6 +15,7 @@ interface FeedViewModel {
   getCreator: (creatorId: string) => Creator | undefined
   handleLike: (postId: string) => void
   isPostLiked: (postId: string) => boolean
+  isCreatorSubscribed: (creatorId: string) => boolean
   isLoading: boolean
   isFetchingMore: boolean
   hasMore: boolean
@@ -139,6 +140,7 @@ export function useFeedViewModel(): FeedViewModel {
   }
 
   const isPostLiked = (postId: string) => likedPostIds.has(postId)
+  const isCreatorSubscribed = (creatorId: string) => subscribedCreatorIds.has(creatorId)
 
-  return { visiblePosts, getCreator, handleLike, isPostLiked, isLoading, isFetchingMore, hasMore, loadMore, error, filter, setFilter }
+  return { visiblePosts, getCreator, handleLike, isPostLiked, isCreatorSubscribed, isLoading, isFetchingMore, hasMore, loadMore, error, filter, setFilter }
 }

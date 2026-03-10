@@ -1,24 +1,84 @@
-import { useState } from "react"
-import { useParams, Navigate, Link } from "react-router-dom"
-import { MOCK_CREATORS } from "../data/mockCreators"
+import { useState, useEffect } from "react"
+import { useParams, Navigate, Link, useSearchParams } from "react-router-dom"
+import { useAuth } from "../context/AuthContext"
+import { getCreatorById } from "../services/creatorsService"
+import { subscribe } from "../services/subscriptionService"
+import { createSubscriptionCheckout } from "../services/checkoutService"
+import type { Creator } from "../types/Creator"
 
 function Subscribe() {
   const { creatorId } = useParams<{ creatorId: string }>()
-  const [confirmed, setConfirmed] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const { token } = useAuth()
+  const [searchParams] = useSearchParams()
+  const [creator, setCreator] = useState<Creator | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isCheckingOut, setIsCheckingOut] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [subscribeSuccess, setSubscribeSuccess] = useState(false)
+  const [cancelled, setCancelled] = useState(false)
 
-  const creator = MOCK_CREATORS.find((c) => c.id === creatorId)
-  if (!creator) return <Navigate to="/creators" replace />
+  useEffect(() => {
+    if (!creatorId) return
+    getCreatorById(creatorId)
+      .then((data) => setCreator(data))
+      .catch(() => setError("Créateur introuvable"))
+      .finally(() => setIsLoading(false))
+  }, [creatorId])
+
+  // Détection retour Stripe
+  useEffect(() => {
+    const payment = searchParams.get("payment")
+    if (payment === "success" && creatorId && token) {
+      subscribe(creatorId, token)
+        .then(() => setSubscribeSuccess(true))
+        .catch(() => setSubscribeSuccess(true)) // Stripe a déjà encaissé, on confirme quand même
+    } else if (payment === "cancel") {
+      setCancelled(true)
+    }
+  }, [searchParams, creatorId, token])
 
   const handleConfirm = async () => {
-    setIsLoading(true)
-    // Simule le paiement (Phase 5 : Stripe Checkout)
-    await new Promise((res) => setTimeout(res, 800))
-    setIsLoading(false)
-    setConfirmed(true)
+    if (!creatorId || !token) {
+      setError("Connecte-toi pour t'abonner.")
+      return
+    }
+    setIsCheckingOut(true)
+    setError(null)
+    try {
+      const url = await createSubscriptionCheckout(creatorId, token)
+      window.location.href = url
+    } catch {
+      setError("Erreur lors du paiement. Réessaie.")
+      setIsCheckingOut(false)
+    }
   }
 
-  if (confirmed) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[70vh]">
+        <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-pulse">
+          <div className="w-full h-32 bg-slate-200" />
+          <div className="p-6 flex flex-col gap-4">
+            <div className="flex items-center gap-4 -mt-10">
+              <div className="w-16 h-16 rounded-full bg-slate-200 border-4 border-white" />
+              <div className="mt-4 flex flex-col gap-2">
+                <div className="h-4 w-32 bg-slate-200 rounded" />
+                <div className="h-3 w-20 bg-slate-100 rounded" />
+              </div>
+            </div>
+            <div className="h-16 bg-slate-100 rounded-xl" />
+            <div className="h-12 bg-slate-200 rounded-xl" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error && !creator) return <Navigate to="/creators" replace />
+
+  if (!creator) return <Navigate to="/creators" replace />
+
+  if (subscribeSuccess) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
         <div className="text-5xl">🌀</div>
@@ -75,17 +135,24 @@ function Subscribe() {
             </div>
           </div>
 
-          <p className="text-xs text-slate-400 text-center">
-            Paiement simulé — aucune carte bancaire requise.{" "}
-            <span className="text-slate-500">(Phase 5 : intégration Stripe)</span>
-          </p>
+          {cancelled && (
+            <p className="text-sm text-amber-600 bg-amber-50 rounded-lg px-4 py-2 text-center">
+              Paiement annulé. Tu peux réessayer quand tu veux.
+            </p>
+          )}
+
+          {error && (
+            <p className="text-sm text-red-600 bg-red-50 rounded-lg px-4 py-2 text-center">
+              {error}
+            </p>
+          )}
 
           <button
             onClick={handleConfirm}
-            disabled={isLoading}
+            disabled={isCheckingOut}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors"
           >
-            {isLoading ? "Traitement..." : `Confirmer — ${creator.subscriptionPrice.toFixed(2)} €/mois`}
+            {isCheckingOut ? "Redirection vers le paiement..." : `Confirmer — ${creator.subscriptionPrice.toFixed(2)} €/mois`}
           </button>
 
           <Link

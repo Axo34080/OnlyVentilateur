@@ -211,6 +211,19 @@ function Dashboard() {
                   onChange={(e) => { const f = e.target.files?.[0]; if (f) handleGoodieImageFile(f); e.target.value = "" }}
                 />
               </div>
+              <div className="flex flex-col gap-1 md:col-span-2">
+                <label className="text-xs font-medium text-slate-600">
+                  Variantes
+                  <span className="ml-1 font-normal text-slate-400">(facultatif — séparées par des virgules)</span>
+                </label>
+                <input
+                  type="text"
+                  value={goodieForm.variants}
+                  onChange={(e) => handleGoodieFormChange("variants", e.target.value)}
+                  placeholder="Ex : S, M, L, XL, XXL  ou  Blanc, Noir, Gris"
+                  className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                />
+              </div>
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"

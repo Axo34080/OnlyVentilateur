@@ -9,6 +9,7 @@ export interface Goodie {
   inStock: boolean
   creatorId: string
   creator?: { displayName: string; username: string }
+  variants?: string[]
 }
 
 export async function getGoodieById(id: string): Promise<Goodie> {
@@ -52,12 +53,14 @@ export async function deleteGoodie(id: string, token: string): Promise<void> {
   if (!res.ok) throw new Error("Erreur lors de la suppression du goodie")
 }
 
-export function goodieToCartItem(g: Goodie): GoodieItem {
+export function goodieToCartItem(g: Goodie, variant?: string): GoodieItem {
   return {
     id: g.id,
     name: g.name,
     price: Number(g.price),
     image: g.image,
     creator: g.creator?.displayName ?? "",
+    variants: g.variants,
+    variant,
   }
 }

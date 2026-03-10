@@ -7,17 +7,20 @@ export interface GoodieItem {
   price: number
   image: string
   creator: string
+  variants?: string[]
+  variant?: string
 }
 
-interface CartItem extends GoodieItem {
+export interface CartItem extends GoodieItem {
   quantity: number
+  cartKey: string
 }
 
 interface CartContextType {
   items: CartItem[]
   addItem: (goodie: GoodieItem) => void
-  removeItem: (id: string) => void
-  updateQuantity: (id: string, quantity: number) => void
+  removeItem: (cartKey: string) => void
+  updateQuantity: (cartKey: string, quantity: number) => void
   clearCart: () => void
   totalItems: number
   totalPrice: number
@@ -25,32 +28,37 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | null>(null)
 
+function makeCartKey(id: string, variant?: string): string {
+  return variant ? `${id}|${variant}` : id
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
 
   const addItem = (goodie: GoodieItem) => {
+    const key = makeCartKey(goodie.id, goodie.variant)
     setItems((prev) => {
-      const existing = prev.find((i) => i.id === goodie.id)
+      const existing = prev.find((i) => i.cartKey === key)
       if (existing) {
         return prev.map((i) =>
-          i.id === goodie.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.cartKey === key ? { ...i, quantity: i.quantity + 1 } : i
         )
       }
-      return [...prev, { ...goodie, quantity: 1 }]
+      return [...prev, { ...goodie, quantity: 1, cartKey: key }]
     })
   }
 
-  const removeItem = (id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id))
+  const removeItem = (cartKey: string) => {
+    setItems((prev) => prev.filter((i) => i.cartKey !== cartKey))
   }
 
-  const updateQuantity = (id: string, quantity: number) => {
+  const updateQuantity = (cartKey: string, quantity: number) => {
     if (quantity <= 0) {
-      removeItem(id)
+      removeItem(cartKey)
       return
     }
     setItems((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, quantity } : i))
+      prev.map((i) => (i.cartKey === cartKey ? { ...i, quantity } : i))
     )
   }
 

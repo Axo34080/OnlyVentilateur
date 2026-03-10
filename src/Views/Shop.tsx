@@ -4,7 +4,7 @@ import { useCart } from "../context/CartContext"
 
 function Shop() {
   const {
-    filter, creators, filteredGoodies, addedId, isLoading, isCheckingOut, checkoutSuccess,
+    filter, creators, filteredGoodies, addedId, isLoading, isCheckingOut, checkoutSuccess, checkoutError,
     handleFilter, handleAddToCart, handleCheckout,
   } = useShopViewModel()
   const { items, totalItems, totalPrice, removeItem, updateQuantity } = useCart()
@@ -81,18 +81,27 @@ function Shop() {
                     </div>
                     <div className="flex items-center justify-between mt-auto">
                       <span className="font-bold text-slate-900">{goodie.price.toFixed(2)} €</span>
-                      <button
-                        onClick={() => handleAddToCart(goodie)}
-                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
-                          wasAdded
-                            ? "bg-green-100 text-green-700"
-                            : inCart
-                            ? "bg-blue-50 text-blue-600 border border-blue-200"
-                            : "bg-blue-600 text-white hover:bg-blue-700"
-                        }`}
-                      >
-                        {wasAdded ? "Ajouté !" : inCart ? `Encore (×${inCart.quantity})` : "Ajouter"}
-                      </button>
+                      {goodie.variants && goodie.variants.length > 0 ? (
+                        <Link
+                          to={`/shop/${goodie.id}`}
+                          className="text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors bg-slate-100 text-slate-700 hover:bg-slate-200"
+                        >
+                          Choisir
+                        </Link>
+                      ) : (
+                        <button
+                          onClick={() => handleAddToCart(goodie)}
+                          className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
+                            wasAdded
+                              ? "bg-green-100 text-green-700"
+                              : inCart
+                              ? "bg-blue-50 text-blue-600 border border-blue-200"
+                              : "bg-blue-600 text-white hover:bg-blue-700"
+                          }`}
+                        >
+                          {wasAdded ? "Ajouté !" : inCart ? `Encore (×${inCart.quantity})` : "Ajouter"}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -128,24 +137,27 @@ function Shop() {
                       />
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-slate-900 truncate">{item.name}</p>
+                        {item.variant && (
+                          <p className="text-xs text-blue-600 font-medium">{item.variant}</p>
+                        )}
                         <p className="text-xs text-slate-400">{(item.price * item.quantity).toFixed(2)} €</p>
                       </div>
                       <div className="flex items-center gap-1">
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.cartKey, item.quantity - 1)}
                           className="w-6 h-6 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center"
                         >
                           −
                         </button>
                         <span className="text-xs w-4 text-center text-slate-900">{item.quantity}</span>
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateQuantity(item.cartKey, item.quantity + 1)}
                           className="w-6 h-6 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center"
                         >
                           +
                         </button>
                         <button
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => removeItem(item.cartKey)}
                           className="w-6 h-6 rounded-md text-slate-300 hover:text-red-500 text-xs flex items-center justify-center ml-1"
                         >
                           ✕
@@ -160,12 +172,17 @@ function Shop() {
                     <span className="text-sm text-slate-600">Total</span>
                     <span className="font-bold text-slate-900">{totalPrice.toFixed(2)} €</span>
                   </div>
+                  {checkoutError && (
+                    <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-2">
+                      {checkoutError}
+                    </p>
+                  )}
                   <button
                     onClick={handleCheckout}
                     disabled={isCheckingOut}
                     className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg text-sm transition-colors"
                   >
-                    {isCheckingOut ? "Traitement en cours..." : "Commander"}
+                    {isCheckingOut ? "Redirection vers le paiement..." : "Commander"}
                   </button>
                 </div>
               </>

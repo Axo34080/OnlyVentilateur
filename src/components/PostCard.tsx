@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom"
+import { useAuth } from "../context/AuthContext"
 import PremiumBlur from "./PremiumBlur"
 import type { Post } from "../types/Post"
 
@@ -10,13 +11,21 @@ interface Props {
 }
 
 function PostCard({ post, isSubscribed = false, isLiked = false, onLike }: Props) {
-  const locked = post.isLocked && !isSubscribed
   const navigate = useNavigate()
+  const { token, user } = useAuth()
+  const isOwnPost = user?.creatorId === post.creatorId
+  const locked = post.isLocked && !isSubscribed && !isOwnPost
 
   return (
     <div
       className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-      onClick={() => navigate(`/posts/${post.id}`)}
+      onClick={() => {
+        if (locked) {
+          navigate(token ? `/subscribe/${post.creatorId}` : "/login")
+        } else {
+          navigate(`/posts/${post.id}`)
+        }
+      }}
     >
 
       {/* Image */}

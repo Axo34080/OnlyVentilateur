@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { useToast } from "../context/ToastContext"
 import { getCreatorById, getLikedPostIds } from "../services/creatorsService"
-import { subscribe, unsubscribe, getUserSubscriptions, getSubscribedCreators } from "../services/subscriptionService"
+import { unsubscribe, getUserSubscriptions, getSubscribedCreators } from "../services/subscriptionService"
 import { uploadFile } from "../services/uploadService"
 import type { Creator } from "../types/Creator"
 import type { Post } from "../types/Post"
@@ -136,12 +136,8 @@ export function useCreatorProfileViewModel(creatorId: string): CreatorProfileVie
         )
         showToast("Désabonné", "info")
       } else {
-        await subscribe(creatorId, token)
-        setIsSubscribed(true)
-        setCreator((prev) =>
-          prev ? { ...prev, subscriberCount: (prev.subscriberCount ?? 0) + 1 } : prev
-        )
-        showToast(`Abonné à @${creator?.username ?? "ce créateur"} !`, "success")
+        navigate(`/subscribe/${creatorId}`)
+        return
       }
     } catch {
       showToast("Erreur lors de l'abonnement", "error")
