@@ -31,7 +31,7 @@ function Navbar() {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 font-bold text-slate-900 text-lg">
           <img src="/image_2026-03-10_110143029-removebg-preview.png" alt="" className="h-8 w-8 object-contain" />
-          OnlyVentilateur
+          <span>OnlyVentilateur</span>
         </Link>
 
         {/* Liens + actions */}

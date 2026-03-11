@@ -266,25 +266,32 @@ function CreatorProfile() {
         </div>
 
         {/* Avatar flottant */}
-        <div
-          role={isOwnProfile && isEditingProfile ? "button" : undefined}
-          tabIndex={isOwnProfile && isEditingProfile ? 0 : undefined}
-          className={`absolute -bottom-10 left-6 ${isOwnProfile && isEditingProfile ? "cursor-pointer group" : ""}`}
-          onClick={() => isOwnProfile && isEditingProfile && !isUploadingAvatar && avatarInputRef.current?.click()}
-          onKeyDown={(e) => { if (isOwnProfile && isEditingProfile && (e.key === "Enter" || e.key === " ")) avatarInputRef.current?.click() }}
-          title={isOwnProfile && isEditingProfile ? "Changer la photo de profil" : undefined}
-        >
-          <img
-            src={avatarSrc}
-            alt={creator.displayName}
-            className="w-24 h-24 rounded-full border-4 border-white object-cover shadow-md"
-          />
-          {isOwnProfile && isEditingProfile && (
+        {isOwnProfile && isEditingProfile ? (
+          <button
+            type="button"
+            disabled={isUploadingAvatar}
+            onClick={() => avatarInputRef.current?.click()}
+            className="absolute -bottom-10 left-6 cursor-pointer group bg-transparent border-0 p-0"
+            title="Changer la photo de profil"
+          >
+            <img
+              src={avatarSrc}
+              alt={creator.displayName}
+              className="w-24 h-24 rounded-full border-4 border-white object-cover shadow-md"
+            />
             <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
               <span className="text-white text-xl">{isUploadingAvatar ? "⏳" : "📷"}</span>
             </div>
-          )}
-        </div>
+          </button>
+        ) : (
+          <div className="absolute -bottom-10 left-6">
+            <img
+              src={avatarSrc}
+              alt={creator.displayName}
+              className="w-24 h-24 rounded-full border-4 border-white object-cover shadow-md"
+            />
+          </div>
+        )}
 
         <input
           ref={avatarInputRef}
