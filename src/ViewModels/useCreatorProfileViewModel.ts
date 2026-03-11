@@ -1,4 +1,22 @@
 import { useState, useEffect } from "react"
+
+function toggleInSet(prev: Set<string>, id: string, shouldAdd: boolean): Set<string> {
+  const next = new Set(prev)
+  if (shouldAdd) next.add(id)
+  else next.delete(id)
+  return next
+}
+
+function updatePostLikes(postId: string, likes: number) {
+  return (p: Post): Post => (p.id === postId ? { ...p, likes } : p)
+}
+
+function revertPostLikes(postId: string, wasLiked: boolean) {
+  return (p: Post): Post => {
+    if (p.id !== postId) return p
+    return { ...p, likes: wasLiked ? p.likes + 1 : Math.max(0, p.likes - 1) }
+  }
+}
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { useToast } from "../context/ToastContext"
@@ -159,41 +177,8 @@ export function useCreatorProfileViewModel(creatorId: string): CreatorProfileVie
 
     const wasLiked = likedPostIds.has(postId)
 
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId ? { ...p, likes: wasLiked ? Math.max(0, p.likes - 1) : p.likes + 1 } : p
-      )
-    )
-    setLikedPostIds((prev) => {
-      const next = new Set(prev)
-      if (wasLiked) next.delete(postId)
-      else next.add(postId)
-      return next
-    })
-
-    const applyLikeResult = (result: { likes: number; isLiked: boolean }) => {
-      setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, likes: result.likes } : p)))
-      setLikedPostIds((prev) => {
-        const next = new Set(prev)
-        if (result.isLiked) next.add(postId)
-        else next.delete(postId)
-        return next
-      })
-    }
-
-    const revertLike = () => {
-      setPosts((prev) =>
-        prev.map((p) =>
-          p.id === postId ? { ...p, likes: wasLiked ? p.likes + 1 : Math.max(0, p.likes - 1) } : p
-        )
-      )
-      setLikedPostIds((prev) => {
-        const next = new Set(prev)
-        if (wasLiked) next.add(postId)
-        else next.delete(postId)
-        return next
-      })
-    }
+    setPosts((prev) => prev.map(revertPostLikes(postId, !wasLiked)))
+    setLikedPostIds((prev) => toggleInSet(prev, postId, !wasLiked))
 
     fetch(`/api/posts/${postId}/like`, {
       method: "POST",
@@ -203,8 +188,14 @@ export function useCreatorProfileViewModel(creatorId: string): CreatorProfileVie
         if (!res.ok) throw new Error("Like failed")
         return res.json()
       })
-      .then(applyLikeResult)
-      .catch(revertLike)
+      .then((result: { likes: number; isLiked: boolean }) => {
+        setPosts((prev) => prev.map(updatePostLikes(postId, result.likes)))
+        setLikedPostIds((prev) => toggleInSet(prev, postId, result.isLiked))
+      })
+      .catch(() => {
+        setPosts((prev) => prev.map(revertPostLikes(postId, wasLiked)))
+        setLikedPostIds((prev) => toggleInSet(prev, postId, wasLiked))
+      })
   }
 
   const isPostLiked = (postId: string) => likedPostIds.has(postId)

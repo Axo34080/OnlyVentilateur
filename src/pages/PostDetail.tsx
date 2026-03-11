@@ -120,7 +120,7 @@ function PostDetail() {
           {/* Image floutée */}
           <div className="relative">
             <img
-              src={post.image}
+              src={post.image ?? undefined}
               alt={post.title}
               className="w-full object-cover max-h-[320px] blur-sm scale-105"
             />
@@ -203,7 +203,7 @@ function PostDetail() {
 
       {/* Image */}
       <img
-        src={post.image}
+        src={post.image ?? undefined}
         alt={post.title}
         className="w-full rounded-2xl object-cover max-h-[480px]"
       />

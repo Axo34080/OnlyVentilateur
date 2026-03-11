@@ -1,6 +1,103 @@
 import { useRef } from "react"
 import { Link, Navigate, useLocation } from "react-router-dom"
 import { useUserProfileViewModel } from "../ViewModels/useUserProfileViewModel"
+import type { Creator } from "../types/Creator"
+
+type CreatorForm = { displayName: string; coverImage: string; subscriptionPrice: string }
+
+type CreatorSectionProps = Readonly<{
+  creatorId: string | undefined
+  creatorData: Creator | null | undefined
+  creatorForm: CreatorForm
+  isEditingCreator: boolean
+  isSavingCreator: boolean
+  creatorError: string | null
+  handleEditCreator: () => void
+  handleCancelCreator: () => void
+  handleSaveCreator: () => Promise<void>
+  handleCreatorChange: (field: keyof CreatorForm, value: string) => void
+}>
+
+function CreatorSection({
+  creatorId, creatorData, creatorForm, isEditingCreator, isSavingCreator, creatorError,
+  handleEditCreator, handleCancelCreator, handleSaveCreator, handleCreatorChange,
+}: CreatorSectionProps) {
+  const coverSrc = isEditingCreator ? creatorForm.coverImage : creatorData?.coverImage
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+      <div className="relative h-32 bg-gradient-to-r from-blue-100 to-slate-100 overflow-hidden">
+        {coverSrc && (
+          <img
+            src={coverSrc}
+            alt="Couverture" className="w-full h-full object-cover"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
+          />
+        )}
+        <div className="absolute bottom-2 right-3 text-xs text-white/70 bg-black/30 px-2 py-0.5 rounded">
+          Aperçu couverture
+        </div>
+      </div>
+
+      <div className="p-6 flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-bold text-slate-900">Profil créateur</h2>
+          <div className="flex items-center gap-3">
+            <Link to={`/creators/${creatorId}`} className="text-sm text-slate-400 hover:text-slate-700 transition-colors">
+              {"Voir ma page →"}
+            </Link>
+            {!isEditingCreator && (
+              <button onClick={handleEditCreator} className="text-sm text-blue-600 hover:underline font-medium">Modifier</button>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div>
+            <label htmlFor="creator-displayname" className="block text-sm font-medium text-slate-700 mb-1">{"Nom d'affichage"}</label>
+            <input id="creator-displayname" type="text"
+              value={isEditingCreator ? creatorForm.displayName : (creatorData?.displayName ?? "")}
+              onChange={(e) => handleCreatorChange("displayName", e.target.value)} disabled={!isEditingCreator}
+              className="w-full px-4 py-2.5 rounded-lg border border-slate-300 disabled:bg-slate-50 disabled:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
+            />
+          </div>
+          <div>
+            <label htmlFor="creator-cover" className="block text-sm font-medium text-slate-700 mb-1">URL photo de couverture</label>
+            <input id="creator-cover" type="url"
+              value={isEditingCreator ? creatorForm.coverImage : (creatorData?.coverImage ?? "")}
+              onChange={(e) => handleCreatorChange("coverImage", e.target.value)} disabled={!isEditingCreator}
+              placeholder="https://..."
+              className="w-full px-4 py-2.5 rounded-lg border border-slate-300 disabled:bg-slate-50 disabled:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
+            />
+          </div>
+          <div>
+            <label htmlFor="creator-price" className="block text-sm font-medium text-slate-700 mb-1">Prix abonnement (€/mois)</label>
+            <input id="creator-price" type="number" min="0" step="0.01"
+              value={isEditingCreator ? creatorForm.subscriptionPrice : (creatorData?.subscriptionPrice?.toString() ?? "")}
+              onChange={(e) => handleCreatorChange("subscriptionPrice", e.target.value)} disabled={!isEditingCreator}
+              className="w-full px-4 py-2.5 rounded-lg border border-slate-300 disabled:bg-slate-50 disabled:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
+            />
+          </div>
+        </div>
+
+        {creatorError && <p className="text-sm text-red-600 bg-red-50 px-4 py-2.5 rounded-lg">{creatorError}</p>}
+
+        {isEditingCreator && (
+          <div className="flex gap-3 pt-1">
+            <button onClick={handleSaveCreator} disabled={isSavingCreator}
+              className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors">
+              {isSavingCreator ? "Sauvegarde..." : "Sauvegarder"}
+            </button>
+            <button onClick={handleCancelCreator} disabled={isSavingCreator}
+              className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-5 py-2 rounded-lg text-sm transition-colors">
+              Annuler
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 function UserProfile() {
   const location = useLocation()
@@ -116,77 +213,18 @@ function UserProfile() {
       </div>
 
       {/* Profil créateur */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <div className="relative h-32 bg-gradient-to-r from-blue-100 to-slate-100 overflow-hidden">
-            {(isEditingCreator ? creatorForm.coverImage : creatorData?.coverImage) && (
-              <img
-                src={isEditingCreator ? creatorForm.coverImage : creatorData?.coverImage}
-                alt="Couverture" className="w-full h-full object-cover"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = "none" }}
-              />
-            )}
-            <div className="absolute bottom-2 right-3 text-xs text-white/70 bg-black/30 px-2 py-0.5 rounded">
-              Aperçu couverture
-            </div>
-          </div>
-
-          <div className="p-6 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-bold text-slate-900">Profil créateur</h2>
-              <div className="flex items-center gap-3">
-                <Link to={`/creators/${user.creatorId}`} className="text-sm text-slate-400 hover:text-slate-700 transition-colors">
-                  {"Voir ma page →"}
-                </Link>
-                {!isEditingCreator && (
-                  <button onClick={handleEditCreator} className="text-sm text-blue-600 hover:underline font-medium">Modifier</button>
-                )}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <div>
-                <label htmlFor="creator-displayname" className="block text-sm font-medium text-slate-700 mb-1">{"Nom d'affichage"}</label>
-                <input id="creator-displayname" type="text"
-                  value={isEditingCreator ? creatorForm.displayName : (creatorData?.displayName ?? "")}
-                  onChange={(e) => handleCreatorChange("displayName", e.target.value)} disabled={!isEditingCreator}
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-300 disabled:bg-slate-50 disabled:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
-                />
-              </div>
-              <div>
-                <label htmlFor="creator-cover" className="block text-sm font-medium text-slate-700 mb-1">URL photo de couverture</label>
-                <input id="creator-cover" type="url"
-                  value={isEditingCreator ? creatorForm.coverImage : (creatorData?.coverImage ?? "")}
-                  onChange={(e) => handleCreatorChange("coverImage", e.target.value)} disabled={!isEditingCreator}
-                  placeholder="https://..."
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-300 disabled:bg-slate-50 disabled:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
-                />
-              </div>
-              <div>
-                <label htmlFor="creator-price" className="block text-sm font-medium text-slate-700 mb-1">Prix abonnement (€/mois)</label>
-                <input id="creator-price" type="number" min="0" step="0.01"
-                  value={isEditingCreator ? creatorForm.subscriptionPrice : (creatorData?.subscriptionPrice?.toString() ?? "")}
-                  onChange={(e) => handleCreatorChange("subscriptionPrice", e.target.value)} disabled={!isEditingCreator}
-                  className="w-full px-4 py-2.5 rounded-lg border border-slate-300 disabled:bg-slate-50 disabled:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
-                />
-              </div>
-            </div>
-
-            {creatorError && <p className="text-sm text-red-600 bg-red-50 px-4 py-2.5 rounded-lg">{creatorError}</p>}
-
-            {isEditingCreator && (
-              <div className="flex gap-3 pt-1">
-                <button onClick={handleSaveCreator} disabled={isSavingCreator}
-                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors">
-                  {isSavingCreator ? "Sauvegarde..." : "Sauvegarder"}
-                </button>
-                <button onClick={handleCancelCreator} disabled={isSavingCreator}
-                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-5 py-2 rounded-lg text-sm transition-colors">
-                  Annuler
-                </button>
-              </div>
-            )}
-          </div>
-      </div>
+      <CreatorSection
+        creatorId={user.creatorId}
+        creatorData={creatorData}
+        creatorForm={creatorForm}
+        isEditingCreator={isEditingCreator}
+        isSavingCreator={isSavingCreator}
+        creatorError={creatorError}
+        handleEditCreator={handleEditCreator}
+        handleCancelCreator={handleCancelCreator}
+        handleSaveCreator={handleSaveCreator}
+        handleCreatorChange={handleCreatorChange}
+      />
 
       {/* Abonnements */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6">

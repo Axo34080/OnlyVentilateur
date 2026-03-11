@@ -21,9 +21,6 @@ function Feed() {
 
   return (
     <div className="flex flex-col gap-6">
-
-      <h1 className="text-2xl font-bold text-slate-900">🌀 Fil d'actualité</h1>
-
       {/* Onglets filtre style X.com */}
       <div className="flex border-b border-slate-200">
         <button

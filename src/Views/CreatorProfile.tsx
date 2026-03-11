@@ -2,8 +2,191 @@ import { useRef, useState } from "react"
 import { useParams, Navigate, Link } from "react-router-dom"
 import { useCreatorProfileViewModel } from "../ViewModels/useCreatorProfileViewModel"
 import PostCard from "../components/PostCard"
+import type { Creator } from "../types/Creator"
+import type { Post } from "../types/Post"
+import type { Goodie } from "../services/goodiesService"
 
 type Tab = "posts" | "shop" | "about" | "subs"
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+type ProfileButtonsProps = Readonly<{
+  isOwnProfile: boolean
+  isEditingProfile: boolean
+  isSavingProfile: boolean
+  isUploadingAvatar: boolean
+  isUploadingCover: boolean
+  profileError: string | null
+  creator: Creator
+  isSubscribed: boolean
+  isCheckingSubscription: boolean
+  handleEditProfile: () => void
+  handleCancelEditProfile: () => void
+  handleSaveProfile: () => Promise<void>
+  handleSubscribe: () => Promise<void>
+}>
+
+function ProfileButtons({
+  isOwnProfile, isEditingProfile, isSavingProfile, isUploadingAvatar, isUploadingCover,
+  profileError, creator, isSubscribed, isCheckingSubscription,
+  handleEditProfile, handleCancelEditProfile, handleSaveProfile, handleSubscribe,
+}: ProfileButtonsProps) {
+  if (isOwnProfile && isEditingProfile) {
+    return (
+      <div className="flex flex-col items-end gap-2">
+        {profileError && (
+          <p className="text-sm text-red-600 bg-red-50 px-3 py-1.5 rounded-lg max-w-xs text-right">{profileError}</p>
+        )}
+        <div className="flex gap-2">
+          <button
+            onClick={handleSaveProfile}
+            disabled={isSavingProfile || isUploadingAvatar || isUploadingCover}
+            className="px-5 py-2.5 rounded-xl font-semibold text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
+          >
+            {isSavingProfile ? "Sauvegarde..." : "Sauvegarder"}
+          </button>
+          <button
+            onClick={handleCancelEditProfile}
+            disabled={isSavingProfile}
+            className="px-5 py-2.5 rounded-xl font-semibold text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+          >
+            Annuler
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (isOwnProfile) {
+    return (
+      <div className="flex gap-2">
+        <button
+          onClick={handleEditProfile}
+          className="px-5 py-2.5 rounded-xl font-semibold text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200"
+        >
+          Modifier le profil
+        </button>
+        <Link
+          to="/dashboard"
+          className="px-5 py-2.5 rounded-xl font-semibold text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+        >
+          Gérer mon espace →
+        </Link>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <button
+        onClick={handleSubscribe}
+        disabled={isCheckingSubscription}
+        className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-colors disabled:opacity-50 ${
+          isSubscribed
+            ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
+            : "bg-blue-600 text-white hover:bg-blue-700"
+        }`}
+      >
+        {isCheckingSubscription ? "..." : isSubscribed ? "Se désabonner" : `S'abonner — ${creator.subscriptionPrice.toFixed(2)} €/mois`}
+      </button>
+      {isSubscribed && !isCheckingSubscription && (
+        <span className="text-xs text-slate-400">Accès à tout le contenu premium</span>
+      )}
+    </>
+  )
+}
+
+type PostsTabProps = Readonly<{
+  posts: Post[]
+  isSubscribed: boolean
+  isOwnProfile: boolean
+  isPostLiked: (id: string) => boolean
+  handleLike: (id: string) => void
+}>
+
+function PostsTab({ posts, isSubscribed, isOwnProfile, isPostLiked, handleLike }: PostsTabProps) {
+  if (posts.length === 0) {
+    return <p className="text-slate-400 text-sm">Aucune publication pour le moment.</p>
+  }
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {posts.map((post) => (
+        <PostCard
+          key={post.id}
+          post={post}
+          isSubscribed={isSubscribed || isOwnProfile}
+          isLiked={isPostLiked(post.id)}
+          onLike={handleLike}
+        />
+      ))}
+    </div>
+  )
+}
+
+function ShopTab({ goodies }: Readonly<{ goodies: Goodie[] }>) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {goodies.map((goodie) => (
+        <Link
+          key={goodie.id}
+          to={`/shop/${goodie.id}`}
+          className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+        >
+          <img src={goodie.image} alt={goodie.name} className="w-full h-40 object-cover" />
+          <div className="p-4 flex flex-col gap-1">
+            <h3 className="font-semibold text-slate-900 text-sm leading-snug">{goodie.name}</h3>
+            {goodie.description && (
+              <p className="text-xs text-slate-500 line-clamp-2">{goodie.description}</p>
+            )}
+            <div className="flex items-center justify-between mt-2">
+              <span className="font-bold text-blue-600">{Number(goodie.price).toFixed(2)} €</span>
+              {!goodie.inStock && (
+                <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Rupture</span>
+              )}
+            </div>
+          </div>
+        </Link>
+      ))}
+    </div>
+  )
+}
+
+type SubsTabProps = Readonly<{
+  subscriptions: Creator[]
+  handleUnsubscribeFromCreator: (id: string) => Promise<void>
+}>
+
+function SubsTab({ subscriptions, handleUnsubscribeFromCreator }: SubsTabProps) {
+  if (subscriptions.length === 0) {
+    return <p className="text-sm text-slate-400">{"Tu n'es abonné à aucun créateur pour l'instant."}</p>
+  }
+  return (
+    <div className="flex flex-col gap-3">
+      {subscriptions.map((sub) => (
+        <div key={sub.id} className="flex items-center justify-between gap-3">
+          <Link
+            to={`/creators/${sub.id}`}
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity min-w-0"
+          >
+            <img src={sub.avatar} alt={sub.displayName} className="w-10 h-10 rounded-full object-cover shrink-0" />
+            <div className="min-w-0">
+              <div className="font-semibold text-slate-900 text-sm truncate">{sub.displayName}</div>
+              <div className="text-xs text-slate-400 truncate">{sub.username}</div>
+            </div>
+          </Link>
+          <button
+            onClick={() => handleUnsubscribeFromCreator(sub.id)}
+            className="text-xs text-slate-500 hover:text-red-500 transition-colors shrink-0 border border-slate-200 hover:border-red-200 px-3 py-1.5 rounded-lg"
+          >
+            Se désabonner
+          </button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
 
 function CreatorProfile() {
   const { id } = useParams<{ id: string }>()
@@ -188,67 +371,21 @@ function CreatorProfile() {
 
         {/* Boutons droite */}
         <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
-          {isOwnProfile ? (
-            isEditingProfile ? (
-              <div className="flex flex-col items-end gap-2">
-                {profileError && (
-                  <p className="text-sm text-red-600 bg-red-50 px-3 py-1.5 rounded-lg max-w-xs text-right">{profileError}</p>
-                )}
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleSaveProfile}
-                    disabled={isSavingProfile || isUploadingAvatar || isUploadingCover}
-                    className="px-5 py-2.5 rounded-xl font-semibold text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
-                  >
-                    {isSavingProfile ? "Sauvegarde..." : "Sauvegarder"}
-                  </button>
-                  <button
-                    onClick={handleCancelEditProfile}
-                    disabled={isSavingProfile}
-                    className="px-5 py-2.5 rounded-xl font-semibold text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
-                  >
-                    Annuler
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                <button
-                  onClick={handleEditProfile}
-                  className="px-5 py-2.5 rounded-xl font-semibold text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200"
-                >
-                  Modifier le profil
-                </button>
-                <Link
-                  to="/dashboard"
-                  className="px-5 py-2.5 rounded-xl font-semibold text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                >
-                  Gérer mon espace →
-                </Link>
-              </div>
-            )
-          ) : (
-            <>
-              <button
-                onClick={handleSubscribe}
-                disabled={isCheckingSubscription}
-                className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-colors disabled:opacity-50 ${
-                  isSubscribed
-                    ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
-                    : "bg-blue-600 text-white hover:bg-blue-700"
-                }`}
-              >
-                {isCheckingSubscription
-                  ? "..."
-                  : isSubscribed
-                  ? "Se désabonner"
-                  : `S'abonner — ${creator.subscriptionPrice.toFixed(2)} €/mois`}
-              </button>
-              {isSubscribed && !isCheckingSubscription && (
-                <span className="text-xs text-slate-400">Accès à tout le contenu premium</span>
-              )}
-            </>
-          )}
+          <ProfileButtons
+            isOwnProfile={isOwnProfile}
+            isEditingProfile={isEditingProfile}
+            isSavingProfile={isSavingProfile}
+            isUploadingAvatar={isUploadingAvatar}
+            isUploadingCover={isUploadingCover}
+            profileError={profileError}
+            creator={creator}
+            isSubscribed={isSubscribed}
+            isCheckingSubscription={isCheckingSubscription}
+            handleEditProfile={handleEditProfile}
+            handleCancelEditProfile={handleCancelEditProfile}
+            handleSaveProfile={handleSaveProfile}
+            handleSubscribe={handleSubscribe}
+          />
         </div>
       </div>
 
@@ -269,51 +406,17 @@ function CreatorProfile() {
         ))}
       </div>
 
-      {/* Onglet Publications */}
       {activeTab === "posts" && (
-        posts.length === 0 ? (
-          <p className="text-slate-400 text-sm">Aucune publication pour le moment.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {posts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                isSubscribed={isSubscribed || isOwnProfile}
-                isLiked={isPostLiked(post.id)}
-                onLike={handleLike}
-              />
-            ))}
-          </div>
-        )
+        <PostsTab
+          posts={posts}
+          isSubscribed={isSubscribed}
+          isOwnProfile={isOwnProfile}
+          isPostLiked={isPostLiked}
+          handleLike={handleLike}
+        />
       )}
 
-      {/* Onglet Boutique */}
-      {activeTab === "shop" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {goodies.map((goodie) => (
-            <Link
-              key={goodie.id}
-              to={`/shop/${goodie.id}`}
-              className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
-            >
-              <img src={goodie.image} alt={goodie.name} className="w-full h-40 object-cover" />
-              <div className="p-4 flex flex-col gap-1">
-                <h3 className="font-semibold text-slate-900 text-sm leading-snug">{goodie.name}</h3>
-                {goodie.description && (
-                  <p className="text-xs text-slate-500 line-clamp-2">{goodie.description}</p>
-                )}
-                <div className="flex items-center justify-between mt-2">
-                  <span className="font-bold text-blue-600">{Number(goodie.price).toFixed(2)} €</span>
-                  {!goodie.inStock && (
-                    <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Rupture</span>
-                  )}
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
+      {activeTab === "shop" && <ShopTab goodies={goodies} />}
 
       {/* Onglet À propos */}
       {activeTab === "about" && (
@@ -347,35 +450,9 @@ function CreatorProfile() {
         </div>
       )}
 
-      {/* Onglet Mes abonnements (own profile uniquement) */}
       {activeTab === "subs" && isOwnProfile && (
         <div className="max-w-xl">
-          {subscriptions.length === 0 ? (
-            <p className="text-sm text-slate-400">{"Tu n'es abonné à aucun créateur pour l'instant."}</p>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {subscriptions.map((sub) => (
-                <div key={sub.id} className="flex items-center justify-between gap-3">
-                  <Link
-                    to={`/creators/${sub.id}`}
-                    className="flex items-center gap-3 hover:opacity-80 transition-opacity min-w-0"
-                  >
-                    <img src={sub.avatar} alt={sub.displayName} className="w-10 h-10 rounded-full object-cover shrink-0" />
-                    <div className="min-w-0">
-                      <div className="font-semibold text-slate-900 text-sm truncate">{sub.displayName}</div>
-                      <div className="text-xs text-slate-400 truncate">{sub.username}</div>
-                    </div>
-                  </Link>
-                  <button
-                    onClick={() => handleUnsubscribeFromCreator(sub.id)}
-                    className="text-xs text-slate-500 hover:text-red-500 transition-colors shrink-0 border border-slate-200 hover:border-red-200 px-3 py-1.5 rounded-lg"
-                  >
-                    Se désabonner
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+          <SubsTab subscriptions={subscriptions} handleUnsubscribeFromCreator={handleUnsubscribeFromCreator} />
         </div>
       )}
 
