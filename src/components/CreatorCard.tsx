@@ -24,11 +24,17 @@ function CreatorCard({ creator }: Props) {
       {/* Avatar + badges */}
       <div className="px-4 pb-4">
         <div className="flex items-end justify-between -mt-8 mb-3">
-          <img
-            src={creator.avatar}
-            alt={creator.displayName}
-            className="w-16 h-16 rounded-full border-4 border-white object-cover shadow-sm"
-          />
+          {creator.avatar ? (
+            <img
+              src={creator.avatar}
+              alt={creator.displayName}
+              className="w-16 h-16 rounded-full border-4 border-white object-cover shadow-sm"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-full border-4 border-white bg-blue-100 flex items-center justify-center shadow-sm">
+              <span className="text-blue-600 font-bold text-xl">{creator.displayName.charAt(0).toUpperCase()}</span>
+            </div>
+          )}
           {creator.isPremium && (
             <span className="text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
               ⭐ Premium

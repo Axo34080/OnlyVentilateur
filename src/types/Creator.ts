@@ -9,4 +9,5 @@ export interface Creator {
   postCount?: number
   subscriptionPrice: number
   isPremium: boolean
+  userId?: string
 }

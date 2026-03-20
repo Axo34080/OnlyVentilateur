@@ -17,6 +17,8 @@
 | React Router DOM | 7.13                  | Routing SPA                             |
 | Tailwind CSS     | 4.2                   | Styles utilitaires                      |
 | ESLint           | 9 + typescript-eslint | Linting                                 |
+| socket.io-client | 4.x                   | WebSocket client (chat temps réel)      |
+| @daily-co/daily-js | —                   | SDK appel vidéo (Daily.co embed)        |
 
 ### Backend
 
@@ -27,6 +29,7 @@
 | PostgreSQL   | 16      | Base de données (Docker)      |
 | passport-jwt | —       | Stratégie JWT                 |
 | bcrypt       | —       | Hash des mots de passe        |
+| socket.io    | 4.x     | WebSocket server (chat + signaling WebRTC) |
 
 **Lancer le projet :**
 
@@ -82,6 +85,8 @@ src/
 | `/dashboard/new-post`   | `Views/NewPost.tsx`        | **Protégé** — créer un post       |
 | `/dashboard/edit-post/:id` | `Views/NewPost.tsx`     | **Protégé** — éditer un post      |
 | `/users/:id`            | `Views/UserPublicProfile.tsx` | Public — profil utilisateur (redirect `/creators/:id` si créateur) |
+| `/messages`             | `pages/Messages.tsx`       | **Protégé** — liste des conversations privées |
+| `/messages/:userId`     | `Views/Chat.tsx`           | **Protégé** — fenêtre de chat + transfert fichiers P2P + appel vidéo |
 | `*`                     | `pages/NotFound.tsx`       | Public — 404 catch-all            |
 
 Les routes protégées utilisent `components/ProtectedRoute.tsx` — redirige vers `/login` si `isAuthenticated === false`.
@@ -135,6 +140,29 @@ interface Post {
   likes: number;
   createdAt: string;
   tags: string[];
+}
+```
+
+### `types/Message.ts`
+
+```typescript
+type MessageType = 'text' | 'file'
+
+interface Message {
+  id: string
+  senderId: string
+  receiverId: string
+  content: string | null
+  type: MessageType
+  fileName: string | null
+  createdAt: string
+}
+
+interface Conversation {
+  userId: string
+  username: string
+  avatar: string | null
+  lastMessage: Message
 }
 ```
 
@@ -301,6 +329,42 @@ Appels vers le backend Stripe Checkout.
 
 Le frontend redirige avec `window.location.href = url`. Les items sont envoyés avec variante dans le nom : `"T-shirt TurboFan (L)"`.
 
+### `services/messagesService.ts` ✅
+
+| Fonction           | Signature                                       | Description                              |
+| ------------------ | ----------------------------------------------- | ---------------------------------------- |
+| `getConversations` | `(token) => Promise<Conversation[]>`            | GET `/api/messages/conversations`        |
+| `getHistory`       | `(token, userId) => Promise<Message[]>`         | GET `/api/messages/:userId`              |
+| `createVideoRoom`  | `(token) => Promise<{ url: string }>`           | POST `/api/video/room` → URL Daily.co    |
+
+### `services/socketService.ts` ✅
+
+Gère la connexion socket.io vers le namespace `/chat`. Authentification via `auth.token` (JWT).
+
+| Fonction             | Description                                                   |
+| -------------------- | ------------------------------------------------------------- |
+| `connectSocket(token)` | Crée la connexion au namespace `/chat`                      |
+| `disconnectSocket()` | Ferme la connexion                                            |
+| `sendMessage(receiverId, content, type?, fileName?)` | Émet `send_message` |
+| `onNewMessage(handler)` | S'abonne à `new_message` + `message_sent` → retourne unsubscribe |
+| `sendOffer/Answer/IceCandidate(targetUserId, data)` | Signaling WebRTC |
+| `requestCall(targetUserId, roomUrl)` | Notifie le destinataire d'un appel entrant |
+| `acceptCall/rejectCall(targetUserId)` | Réponse à un appel entrant |
+
+### `services/webrtcService.ts` ✅
+
+Transfert de fichiers peer-to-peer via **WebRTC DataChannel** (aucun serveur intermédiaire).
+
+| Fonction                        | Description                                                     |
+| ------------------------------- | --------------------------------------------------------------- |
+| `initiateFileTransfer(targetUserId, file, onProgress)` | Crée la connexion P2P, envoie le fichier en chunks 16 KB |
+| `handleIncomingOffer(targetUserId, offer)` | Répond à un `webrtc_offer`, reçoit les chunks      |
+| `handleAnswer(answer)` / `handleIceCandidate(candidate)` | Signaling RTCPeerConnection |
+| `setFileReceiveHandler(handler)` | Callback `(fileName, blob)` appelé quand le fichier est reçu   |
+| `closePeerConnection()` | Ferme DataChannel + RTCPeerConnection                          |
+
+STUN server : `stun:stun.l.google.com:19302` (gratuit, public).
+
 ### `services/usersService.ts` ✅
 
 | Fonction        | Signature                        | Description                                   |
@@ -361,6 +425,17 @@ Overlay flou sur le contenu verrouillé.
 | ---------- | ----------- | ------------------------------------------ |
 | `isLocked` | `boolean`   | Si `true`, applique `blur-sm` + overlay 🔒 |
 | `children` | `ReactNode` | Contenu à afficher (ou flouter)            |
+
+### `components/VideoCallModal.tsx` ✅
+
+Modal d'appel vidéo via **Daily.co embed** (`@daily-co/daily-js`).
+
+| Prop      | Type         | Description                         |
+| --------- | ------------ | ------------------------------------ |
+| `roomUrl` | `string`     | URL de la room Daily.co              |
+| `onClose` | `() => void` | Callback fermeture (bouton ✕ ou `left-meeting`) |
+
+Crée un `DailyIframe.createFrame()` dans un `div` référencé, rejoint la room, écoute l'événement `left-meeting` pour fermer automatiquement.
 
 ### `components/ProtectedRoute.tsx` ✅
 
@@ -536,6 +611,29 @@ Espace créateur (`/dashboard`). Tous les utilisateurs sont créateurs — pas d
 - **Upload image goodie** : `handleGoodieImageFile(file)` → `POST /api/upload` → `goodieForm.image = url`. `isUploadingGoodieImage` désactive le bouton "Créer" pendant l'upload. Champ URL de secours toujours présent.
 - **Variantes** : `goodieForm.variants: string` — saisie libre virgule-séparée ("S, M, L, XL, XXL"). Parsée en `string[]` au save, `undefined` si vide.
 
+### `pages/Messages.tsx` ✅
+
+Liste des conversations privées (`/messages`, protégé). Charge depuis `GET /api/messages/conversations`. Affiche : avatar, username, dernier message (texte ou `📎 fichier`), date. Skeleton loading. Clic → `/messages/:userId`.
+
+### `Views/Chat.tsx` ✅ (MVVM)
+
+Fenêtre de conversation (`/messages/:userId`, protégé).
+
+- **Texte** : textarea + `Entrée` pour envoyer → socket `send_message`
+- **Fichiers** : bouton 📎 → `<input type="file">` → `webrtcService.initiateFileTransfer()` — transfert P2P direct, barre de progression
+- **Appel vidéo** : bouton 📹 → `POST /api/video/room` → `VideoCallModal` + socket `call_request` au destinataire
+- **Appel entrant** : bannière fixe en bas avec "Accepter" / "Refuser" (événement socket `incoming_call`)
+- Auto-scroll vers le dernier message via `ref` + `scrollIntoView`
+- Messages reçus via socket `new_message` + `message_sent` — dédoublonnage par `id`
+
+**ViewModel :** `ViewModels/useChatViewModel.ts`
+
+- Retourne : `messages`, `isLoading`, `text`, `setText`, `sendText`, `sendFile`, `fileProgress`, `videoRoomUrl`, `incomingCall`, `callError`, `startVideoCall`, `closeVideoCall`, `acceptIncomingCall`, `rejectIncomingCall`, `bottomRef`, `currentUserId`
+
+### `pages/Messages.tsx` utilise `useConversationsViewModel`
+
+**ViewModel :** `ViewModels/useConversationsViewModel.ts` — charge `GET /api/messages/conversations`, retourne `{ conversations, isLoading, error }`.
+
 ### `Views/NewPost.tsx` ✅ (MVVM)
 
 Création (`/dashboard/new-post`) et édition (`/dashboard/edit-post/:id`) d'un post. Champs : titre, description, image (bouton fichier → `POST /api/upload` + champ URL de secours), tags (virgule-séparés), isLocked, prix. Bouton submit désactivé pendant l'upload.
@@ -566,6 +664,8 @@ OnlyVentilateurBack/src/
 ├── goodies/                # GET/POST/PATCH/DELETE /api/goodies (CRUD + ownership check)
 ├── orders/                 # GET/POST /api/orders (JWT protégé)
 ├── upload/                 # POST /api/upload (multer, images uniquement, 5 MB max)
+├── messages/               # chat texte (socket.io) + signaling WebRTC + historique
+├── video/                  # POST /api/video/room (Daily.co room creation)
 └── seed/                   # OnModuleInit — créateurs + posts + goodies + Users liés
 ```
 
@@ -613,6 +713,7 @@ OnlyVentilateurBack/src/
 | Subscription | `subscriptions/subscription.entity.ts` | ManyToOne User, ManyToOne Creator — Unique(user, creator) |
 | Goodie       | `goodies/goodie.entity.ts`          | ManyToOne Creator (eager) — `variants: string[] \| null` (JSON) |
 | Order        | `orders/order.entity.ts`            | `items: OrderLineItem[]` (JSON), `userId`, `total`     |
+| Message      | `messages/message.entity.ts`        | ManyToOne User×2 (sender, receiver) — `content`, `type` ('text'|'file'), `fileName?` |
 
 > ⚠️ Toutes les entités doivent être listées dans `entities: [...]` du `TypeOrmModule.forRootAsync` dans `app.module.ts` pour que `synchronize: true` crée les tables.
 
@@ -663,6 +764,36 @@ Déclencheurs (côté service) :
 - Cancel URL : `/subscribe/:id?payment=cancel` ou `/shop?payment=cancel`
 - Secret : `STRIPE_SECRET_KEY=sk_test_...` dans `.env` backend
 
+### Endpoints Messages
+
+| Méthode | Route                              | Auth | Description                                        |
+| ------- | ---------------------------------- | ---- | -------------------------------------------------- |
+| GET     | `/api/messages/conversations`      | JWT  | Liste des conversations (dernier message par user) |
+| GET     | `/api/messages/:userId`            | JWT  | Historique de la conversation avec un utilisateur  |
+
+**WebSocket** `/chat` (socket.io, JWT via `auth.token`) :
+
+| Événement émis          | Payload                              | Description                        |
+| ----------------------- | ------------------------------------ | ---------------------------------- |
+| `send_message`          | `{ receiverId, content, type?, fileName? }` | Envoie un message texte     |
+| `webrtc_offer/answer/ice_candidate` | `{ targetUserId, data }`  | Signaling WebRTC                   |
+| `call_request`          | `{ targetUserId, roomUrl }`          | Notifie un appel Daily.co entrant  |
+| `call_accepted/rejected`| `{ targetUserId }`                   | Réponse à l'appel                  |
+
+| Événement reçu   | Description                                             |
+| ---------------- | ------------------------------------------------------- |
+| `new_message`    | Message reçu d'un autre utilisateur                     |
+| `message_sent`   | Confirmation de l'envoi (retour au sender)              |
+| `incoming_call`  | `{ fromUserId, roomUrl }` — appel vidéo entrant         |
+
+### Endpoint Vidéo
+
+| Méthode | Route             | Auth | Description                                     |
+| ------- | ----------------- | ---- | ----------------------------------------------- |
+| POST    | `/api/video/room` | JWT  | Crée une room Daily.co (expire après 1h) → `{ url }` |
+
+Nécessite `DAILY_API_KEY` dans `.env` backend.
+
 ### Endpoint Upload
 
 | Méthode | Route          | Auth | Description                                          |
@@ -685,14 +816,19 @@ Le seed est ignoré si des créateurs existent déjà.
 
 ## Sécurité
 
-| Point           | Implémentation                                                          |
-| --------------- | ----------------------------------------------------------------------- |
-| JWT             | Stocké en sessionStorage (persist F5, effacé à fermeture navigateur)   |
-| Mots de passe   | Hashés avec bcrypt (rounds: 10) côté backend                            |
-| Secrets         | JWT_SECRET, DB_PASSWORD → `.env` backend uniquement                    |
-| Routes sensibles | `ProtectedRoute` frontend + `JwtAuthGuard` NestJS                      |
-| Inputs          | `ValidationPipe` NestJS (whitelist: true) + `required`/`minLength` HTML |
-| CORS            | Backend autorise uniquement `http://localhost:5173`                     |
+| Point              | Implémentation                                                                                           |
+| ------------------ | -------------------------------------------------------------------------------------------------------- |
+| JWT                | Stocké en sessionStorage (persist F5, effacé à fermeture navigateur) — expiry `7d`                      |
+| Mots de passe      | Hashés avec bcrypt (rounds: 10) — politique : 8+ chars, 1 majuscule, 1 chiffre (`@Matches`)             |
+| Secrets            | JWT_SECRET, DB_PASSWORD, STRIPE_KEY → `.env` backend — `.gitignore` présent sur les deux projets        |
+| Routes sensibles   | `ProtectedRoute` frontend + `JwtAuthGuard` NestJS                                                       |
+| Inputs             | `ValidationPipe` NestJS (whitelist: true) + `@MaxLength` / `@MinLength` sur tous les DTOs               |
+| CORS               | Backend autorise uniquement `FRONTEND_URL` (`.env`)                                                     |
+| Rate limiting      | Global : 30 req/60s — Login : 5 req/60s (`@Throttle` sur `POST /login`)                                 |
+| Upload fichiers    | MIME `image/*` + whitelist extensions `.jpg .jpeg .png .gif .webp` + limite 5 Mo                        |
+| Commentaires       | `CreateCommentDto` : `@MinLength(1) @MaxLength(1000)` — plus de body non validé                         |
+| Contenu premium    | Posts verrouillés : `image` **et** `description` masqués si non abonné et non propriétaire              |
+| Traçabilité (P)    | `Logger` NestJS dans `AuthService` — connexion réussie, échec mdp, email inconnu, inscription              |
 
 ---
 
@@ -799,7 +935,17 @@ Le seed est ignoré si des créateurs existent déjà.
 
 - [x] **Paiement Stripe Checkout** — abonnements (`POST /api/checkout/subscription`) + goodies (`POST /api/checkout/order`) — redirect Stripe, retour `?payment=success`, `shipping_address_collection` (FR/BE/CH/LU)
 - [x] **Variantes goodies** — champ `variants: string[] | null` (JSON) sur l'entité Goodie — sélecteur taille/couleur sur `/shop/:id` — bouton "Choisir" dans la grille boutique si variantes présentes — champ Dashboard (virgule-séparé) — `cartKey` unique par id+variante dans CartContext
-- [ ] Chat vidéo (WebRTC ou Daily.co)
+- [x] **Chat privé + vidéo** — socket.io (texte temps réel), WebRTC DataChannel (fichiers P2P, aucun stockage serveur), Daily.co embed (appel vidéo) — `DAILY_API_KEY` dans `.env`
+
+### Phase 9 — Audit sécurité ✅
+
+- [x] **`.gitignore` backend créé** — `.env`, `node_modules`, `dist`, `uploads/` exclus du dépôt git
+- [x] **Rate limiting login** — `@Throttle({ default: { ttl: 60000, limit: 5 } })` sur `POST /login` (anti brute-force)
+- [x] **`CreateCommentDto`** — `@IsString() @MinLength(1) @MaxLength(1000)` — remplace le body non typé `{ content: string }`
+- [x] **Upload renforcé** — whitelist d'extensions (`.jpg .jpeg .png .gif .webp`) en plus du check MIME (MIME peut être forgé par le client)
+- [x] **Politique mot de passe** — `SignupDto` : `@MinLength(8) @Matches(uppercase + digit)` + `@MaxLength` sur tous les champs email/username/password
+- [x] **Contenu premium** — `description` (et pas seulement `image`) masquée pour les non-abonnés dans `PostsService.findAll()`
+- [x] **Traçabilité (DICP - P)** — `Logger` NestJS dans `AuthService` : connexion réussie (`[LOGIN]`), échec mot de passe, email inconnu, inscription (`[SIGNUP]`)
 
 ---
 
@@ -816,4 +962,4 @@ Le seed est ignoré si des créateurs existent déjà.
 | MVVM                 | ✅ Fait | `CreatorProfile` + `Feed` + `UserProfile` avec ViewModels           |
 | Custom hooks         | ✅ Fait | `useFeedViewModel`, `useCreatorProfileViewModel`, `useUserProfileViewModel` |
 | Context API          | ✅ Fait | `context/AuthContext.tsx` + `context/CartContext.tsx`               |
-| React Router         | ✅ Fait | 16 routes (7 publiques + 9 protégées via `ProtectedRoute`)          |
+| React Router         | ✅ Fait | 18 routes (7 publiques + 11 protégées via `ProtectedRoute`)         |

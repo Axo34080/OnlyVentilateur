@@ -3,12 +3,15 @@ import { Link, NavLink, useLocation } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { useCart } from "../context/CartContext"
 import { getUnreadCount } from "../services/notificationsService"
+import { getUnreadMessagesCount } from "../services/messagesService"
+import { connectSocket } from "../services/socketService"
 
 function Navbar() {
   const { user, token, isAuthenticated, logout } = useAuth()
   const { totalItems } = useCart()
   const location = useLocation()
   const [unreadCount, setUnreadCount] = useState(0)
+  const [unreadMessages, setUnreadMessages] = useState(0)
 
   useEffect(() => {
     if (!token) { setUnreadCount(0); return }
@@ -18,6 +21,28 @@ function Navbar() {
   useEffect(() => {
     if (location.pathname === '/notifications') setUnreadCount(0)
   }, [location.pathname])
+
+  useEffect(() => {
+    if (!token) { setUnreadMessages(0); return }
+    getUnreadMessagesCount(token).then(setUnreadMessages).catch(() => {})
+  }, [token])
+
+  useEffect(() => {
+    if (location.pathname.startsWith('/messages')) setUnreadMessages(0)
+  }, [location.pathname])
+
+  // Increment badge in real-time when a new message arrives
+  useEffect(() => {
+    if (!token) return
+    const socket = connectSocket(token)
+    const handleNewMessage = () => {
+      if (!location.pathname.startsWith('/messages')) {
+        setUnreadMessages((prev) => prev + 1)
+      }
+    }
+    socket.on('new_message', handleNewMessage)
+    return () => { socket.off('new_message', handleNewMessage) }
+  }, [token, location.pathname])
 
   const navLink = ({ isActive }: { isActive: boolean }) =>
     `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
@@ -42,6 +67,19 @@ function Navbar() {
             <div className="flex items-center gap-2 ml-2">
               <NavLink to="/feed" className={navLink}>Fil</NavLink>
 
+              {/* Icône messages */}
+              <NavLink
+                to="/messages"
+                className="relative px-2 py-1 rounded-lg hover:bg-slate-50 transition-colors text-slate-500 hover:text-slate-900"
+                title="Messages"
+              >
+                💬
+                {unreadMessages > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                    {unreadMessages > 9 ? "9+" : unreadMessages}
+                  </span>
+                )}
+              </NavLink>
 
               {/* Icône notifications */}
               <NavLink

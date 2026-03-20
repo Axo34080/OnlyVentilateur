@@ -34,6 +34,7 @@ function mapCreator(c: any): Creator {
     isPremium: c.isPremium,
     subscriberCount: c.subscriberCount ?? 0,
     postCount: c.postCount ?? 0,
+    userId: c.userId ?? undefined,
   }
 }
 

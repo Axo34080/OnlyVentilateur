@@ -21,6 +21,8 @@ import UserPublicProfile from './Views/UserPublicProfile'
 import Dashboard from './Views/Dashboard'
 import NewPost from './Views/NewPost'
 import Shop from './Views/Shop'
+import Messages from './pages/Messages'
+import Chat from './Views/Chat'
 
 function App() {
   return (
@@ -55,6 +57,10 @@ function App() {
                 <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/dashboard/new-post" element={<ProtectedRoute><NewPost /></ProtectedRoute>} />
                 <Route path="/dashboard/edit-post/:id" element={<ProtectedRoute><NewPost /></ProtectedRoute>} />
+
+                {/* Messages */}
+                <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+                <Route path="/messages/:userId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
 
                 {/* 404 */}
                 <Route path="*" element={<NotFound />} />

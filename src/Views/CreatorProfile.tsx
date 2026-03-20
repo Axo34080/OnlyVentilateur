@@ -20,6 +20,7 @@ type ProfileButtonsProps = Readonly<{
   creator: Creator
   isSubscribed: boolean
   isCheckingSubscription: boolean
+  creatorUserId?: string
   handleEditProfile: () => void
   handleCancelEditProfile: () => void
   handleSaveProfile: () => Promise<void>
@@ -28,7 +29,7 @@ type ProfileButtonsProps = Readonly<{
 
 function ProfileButtons({
   isOwnProfile, isEditingProfile, isSavingProfile, isUploadingAvatar, isUploadingCover,
-  profileError, creator, isSubscribed, isCheckingSubscription,
+  profileError, creator, isSubscribed, isCheckingSubscription, creatorUserId,
   handleEditProfile, handleCancelEditProfile, handleSaveProfile, handleSubscribe,
 }: ProfileButtonsProps) {
   if (isOwnProfile && isEditingProfile) {
@@ -78,17 +79,28 @@ function ProfileButtons({
 
   return (
     <>
-      <button
-        onClick={handleSubscribe}
-        disabled={isCheckingSubscription}
-        className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-colors disabled:opacity-50 ${
-          isSubscribed
-            ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
-            : "bg-blue-600 text-white hover:bg-blue-700"
-        }`}
-      >
-        {isCheckingSubscription ? "..." : isSubscribed ? "Se désabonner" : `S'abonner — ${creator.subscriptionPrice.toFixed(2)} €/mois`}
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={handleSubscribe}
+          disabled={isCheckingSubscription}
+          className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-colors disabled:opacity-50 ${
+            isSubscribed
+              ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
+              : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
+        >
+          {isCheckingSubscription ? "..." : isSubscribed ? "Se désabonner" : `S'abonner — ${creator.subscriptionPrice.toFixed(2)} €/mois`}
+        </button>
+        {creatorUserId && (
+          <Link
+            to={`/messages/${creatorUserId}`}
+            state={{ username: creator.username, avatar: creator.avatar || null }}
+            className="px-5 py-2.5 rounded-xl font-semibold text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-200"
+          >
+            💬 Message
+          </Link>
+        )}
+      </div>
       {isSubscribed && !isCheckingSubscription && (
         <span className="text-xs text-slate-400">Accès à tout le contenu premium</span>
       )}
@@ -388,6 +400,7 @@ function CreatorProfile() {
             creator={creator}
             isSubscribed={isSubscribed}
             isCheckingSubscription={isCheckingSubscription}
+            creatorUserId={creator.userId}
             handleEditProfile={handleEditProfile}
             handleCancelEditProfile={handleCancelEditProfile}
             handleSaveProfile={handleSaveProfile}
