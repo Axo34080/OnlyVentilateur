@@ -43,7 +43,7 @@ interface CreatePostDto {
   tags: string[]
 }
 
-interface UpdatePostDto extends Partial<CreatePostDto> {}
+type UpdatePostDto = Partial<CreatePostDto>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapPost(p: any): Post {
@@ -109,4 +109,3 @@ export async function deletePost(id: string, token: string): Promise<void> {
   })
   if (!res.ok) throw new Error("Erreur lors de la suppression du post")
 }
-

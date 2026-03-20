@@ -29,19 +29,19 @@ function Login() {
 
   return (
     <div className="flex items-center justify-center min-h-[70vh]">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+      <div className="w-full max-w-md bg-[#1a1a1a] rounded-2xl shadow-sm border border-[#2a2a2a] p-8">
 
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-1">
             <img src="/image_2026-03-10_110143029-removebg-preview.png" alt="" className="h-10 w-10 object-contain" />
-            <h1 className="text-3xl font-bold text-slate-900">OnlyVentilateur</h1>
+            <h1 className="text-3xl font-bold text-white">OnlyVentilateur</h1>
           </div>
-          <p className="text-slate-500 mt-2">Content de te revoir, souffleur.</p>
+          <p className="text-[#8a8a8a] mt-2">Content de te revoir, souffleur.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label htmlFor="login-email" className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+            <label htmlFor="login-email" className="block text-sm font-medium text-[#8a8a8a] mb-1">Email</label>
             <input
               id="login-email"
               type="email"
@@ -49,12 +49,12 @@ function Login() {
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="turbo@ventilateur.fr"
-              className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
+              className="w-full px-4 py-2.5 rounded-lg border border-[#2a2a2a] bg-[#111] focus:outline-none focus:ring-2 focus:ring-[#00AFF0] text-white placeholder-[#555]"
             />
           </div>
 
           <div>
-            <label htmlFor="login-password" className="block text-sm font-medium text-slate-700 mb-1">Mot de passe</label>
+            <label htmlFor="login-password" className="block text-sm font-medium text-[#8a8a8a] mb-1">Mot de passe</label>
             <input
               id="login-password"
               type="password"
@@ -62,26 +62,26 @@ function Login() {
               onChange={(e) => setPassword(e.target.value)}
               required
               placeholder="••••••••"
-              className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900"
+              className="w-full px-4 py-2.5 rounded-lg border border-[#2a2a2a] bg-[#111] focus:outline-none focus:ring-2 focus:ring-[#00AFF0] text-white placeholder-[#555]"
             />
           </div>
 
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 px-4 py-2.5 rounded-lg">{error}</p>
+            <p className="text-sm text-red-400 bg-red-900/20 px-4 py-2.5 rounded-lg">{error}</p>
           )}
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg transition-colors"
+            className="w-full bg-[#00AFF0] hover:bg-[#0099CC] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg transition-colors"
           >
             {isLoading ? "Connexion..." : "Se connecter"}
           </button>
         </form>
 
-        <p className="text-center text-sm text-slate-500 mt-6">
+        <p className="text-center text-sm text-[#8a8a8a] mt-6">
           Pas encore de compte ?{" "}
-          <Link to="/signup" className="text-blue-600 hover:underline font-medium">
+          <Link to="/signup" className="text-[#00AFF0] hover:underline font-medium">
             S'inscrire
           </Link>
         </p>

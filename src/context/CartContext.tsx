@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react"
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
 import type { ReactNode } from "react"
 
 export interface GoodieItem {
@@ -50,7 +50,7 @@ export function CartProvider({ children }: Readonly<{ children: ReactNode }>) {
     localStorage.setItem(CART_KEY, JSON.stringify(items))
   }, [items])
 
-  const addItem = (goodie: GoodieItem) => {
+  const addItem = useCallback((goodie: GoodieItem) => {
     const key = makeCartKey(goodie.id, goodie.variant)
     setItems((prev) => {
       const existing = prev.find((i) => i.cartKey === key)
@@ -61,13 +61,13 @@ export function CartProvider({ children }: Readonly<{ children: ReactNode }>) {
       }
       return [...prev, { ...goodie, quantity: 1, cartKey: key }]
     })
-  }
+  }, [])
 
-  const removeItem = (cartKey: string) => {
+  const removeItem = useCallback((cartKey: string) => {
     setItems((prev) => prev.filter((i) => i.cartKey !== cartKey))
-  }
+  }, [])
 
-  const updateQuantity = (cartKey: string, quantity: number) => {
+  const updateQuantity = useCallback((cartKey: string, quantity: number) => {
     if (quantity <= 0) {
       removeItem(cartKey)
       return
@@ -75,9 +75,9 @@ export function CartProvider({ children }: Readonly<{ children: ReactNode }>) {
     setItems((prev) =>
       prev.map((i) => (i.cartKey === cartKey ? { ...i, quantity } : i))
     )
-  }
+  }, [removeItem])
 
-  const clearCart = () => setItems([])
+  const clearCart = useCallback(() => setItems([]), [])
 
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0)
   const totalPrice = items.reduce((sum, i) => sum + i.price * i.quantity, 0)

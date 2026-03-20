@@ -39,34 +39,38 @@ function Chat() {
   return (
     <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-80px)]">
       {/* Header */}
-      <div className="flex items-center gap-3 pb-3 border-b border-slate-200">
+      <div className="flex items-center gap-3 pb-3 border-b border-[#2a2a2a]">
         <button
           onClick={() => navigate('/messages')}
-          className="text-slate-400 hover:text-slate-700 transition-colors"
+          className="text-[#8a8a8a] hover:text-white transition-colors"
         >
-          ←
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          </svg>
         </button>
         {otherAvatar ? (
           <img src={otherAvatar} alt={otherUsername ?? ''} className="w-8 h-8 rounded-full object-cover" />
         ) : otherUsername ? (
-          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600">
+          <div className="w-8 h-8 rounded-full bg-[#00AFF0]/10 flex items-center justify-center text-xs font-bold text-[#00AFF0]">
             {otherUsername.charAt(0).toUpperCase()}
           </div>
         ) : null}
-        <span className="font-semibold text-slate-900 flex-1">
+        <span className="font-semibold text-white flex-1">
           {otherUsername ? `@${otherUsername}` : 'Conversation'}
         </span>
         <button
           onClick={startVideoCall}
           title="Démarrer un appel vidéo"
-          className="text-slate-400 hover:text-blue-500 transition-colors text-xl"
+          className="text-[#8a8a8a] hover:text-[#00AFF0] transition-colors"
         >
-          📹
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+          </svg>
         </button>
       </div>
 
       {callError && (
-        <p className="text-xs text-red-500 text-center py-1">{callError}</p>
+        <p className="text-xs text-red-400 text-center py-1">{callError}</p>
       )}
 
       {/* Messages */}
@@ -76,7 +80,7 @@ function Chat() {
             {[...Array(5)].map((_, i) => (
               <div
                 key={i}
-                className={`h-10 rounded-2xl bg-slate-100 animate-pulse ${i % 2 === 0 ? 'w-2/3' : 'w-1/2 self-end'}`}
+                className={`h-10 rounded-2xl bg-[#1a1a1a] animate-pulse ${i % 2 === 0 ? 'w-2/3' : 'w-1/2 self-end'}`}
               />
             ))}
           </div>
@@ -92,18 +96,20 @@ function Chat() {
               <div
                 className={`max-w-xs px-4 py-2 rounded-2xl text-sm ${
                   isMine
-                    ? 'bg-blue-600 text-white rounded-br-sm'
-                    : 'bg-slate-100 text-slate-900 rounded-bl-sm'
+                    ? 'bg-[#00AFF0] text-white rounded-br-sm'
+                    : 'bg-[#1a1a1a] text-white rounded-bl-sm border border-[#2a2a2a]'
                 }`}
               >
                 {msg.type === 'file' && msg.content ? (
                   <a
                     href={msg.content}
                     download={msg.fileName ?? 'fichier'}
-                    className={`flex items-center gap-2 underline ${isMine ? 'text-blue-100' : 'text-blue-600'}`}
+                    className={`flex items-center gap-2 underline ${isMine ? 'text-white/80' : 'text-[#00AFF0]'}`}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <span>📎</span>
+                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
+                    </svg>
                     <span>{msg.fileName ?? 'Télécharger'}</span>
                   </a>
                 ) : (
@@ -119,25 +125,27 @@ function Chat() {
       {/* File progress */}
       {fileProgress !== null && (
         <div className="px-4 pb-2">
-          <div className="w-full bg-slate-100 rounded-full h-1.5">
+          <div className="w-full bg-[#2a2a2a] rounded-full h-1.5">
             <div
-              className="bg-blue-500 h-1.5 rounded-full transition-all"
+              className="bg-[#00AFF0] h-1.5 rounded-full transition-all"
               style={{ width: `${fileProgress}%` }}
             />
           </div>
-          <p className="text-xs text-slate-400 mt-1 text-center">Envoi du fichier... {fileProgress}%</p>
+          <p className="text-xs text-[#8a8a8a] mt-1 text-center">Envoi du fichier... {fileProgress}%</p>
         </div>
       )}
 
       {/* Input */}
-      <div className="flex items-end gap-2 pt-3 border-t border-slate-200">
+      <div className="flex items-end gap-2 pt-3 border-t border-[#2a2a2a]">
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="text-slate-400 hover:text-blue-500 transition-colors text-xl pb-1"
+          className="text-[#8a8a8a] hover:text-[#00AFF0] transition-colors pb-1"
           title="Envoyer un fichier"
         >
-          📎
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
+          </svg>
         </button>
         <input
           ref={fileInputRef}
@@ -153,14 +161,14 @@ function Chat() {
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Votre message..."
+          placeholder="Ton message..."
           rows={1}
-          className="flex-1 resize-none px-4 py-2.5 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 text-sm"
+          className="input-of resize-none text-sm py-2.5 rounded-2xl flex-1"
         />
         <button
           onClick={sendText}
           disabled={!text.trim()}
-          className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white px-4 py-2.5 rounded-2xl text-sm font-semibold transition-colors"
+          className="bg-[#00AFF0] hover:bg-[#0099CC] disabled:opacity-40 text-white px-4 py-2.5 rounded-2xl text-sm font-semibold transition-colors"
         >
           Envoyer
         </button>
@@ -168,9 +176,11 @@ function Chat() {
 
       {/* Incoming call banner */}
       {incomingCall && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-white border border-slate-200 shadow-xl rounded-2xl px-6 py-4 flex items-center gap-4 z-50">
-          <span className="text-2xl">📹</span>
-          <p className="text-sm font-medium text-slate-900">Appel vidéo entrant</p>
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-[#111] border border-[#2a2a2a] shadow-xl rounded-2xl px-6 py-4 flex items-center gap-4 z-50">
+          <svg className="w-6 h-6 text-[#00AFF0] shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+          </svg>
+          <p className="text-sm font-medium text-white">Appel vidéo entrant</p>
           <button
             onClick={acceptIncomingCall}
             className="bg-green-500 hover:bg-green-600 text-white px-4 py-1.5 rounded-xl text-sm font-semibold"

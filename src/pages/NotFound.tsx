@@ -5,21 +5,21 @@ function NotFound() {
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center">
       <img src="/image_2026-03-10_110143029-removebg-preview.png" alt="" className="h-20 w-20 object-contain opacity-50" />
       <div>
-        <h1 className="text-4xl font-bold text-slate-900">404</h1>
-        <p className="text-slate-500 mt-2">Cette page n'existe pas ou a été emportée par un courant d'air.</p>
+        <h1 className="text-4xl font-bold text-white">404</h1>
+        <p className="text-[#8a8a8a] mt-2">Cette page n'existe pas ou a été emportée par un courant d'air.</p>
       </div>
       <div className="flex gap-3">
         <Link
           to="/"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm"
+          className="bg-[#00AFF0] hover:bg-[#0099CC] text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm"
         >
           Accueil
         </Link>
         <Link
           to="/feed"
-          className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm"
+          className="bg-[#2a2a2a] hover:bg-[#333] text-[#8a8a8a] hover:text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm"
         >
-          Fil d'actualité
+          Courants d'air
         </Link>
       </div>
     </div>

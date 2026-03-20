@@ -1,6 +1,7 @@
-import { createContext, useContext, useMemo, useState } from "react"
+import { createContext, useCallback, useContext, useMemo, useState } from "react"
 import type { ReactNode } from "react"
 import * as authService from "../services/authService"
+import { disconnectSocket } from "../services/socketService"
 import type { User } from "../types/User"
 
 interface AuthContextType {
@@ -31,40 +32,41 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [user, setUser] = useState<User | null>(saved?.user ?? null)
   const [token, setToken] = useState<string | null>(saved?.token ?? null)
 
-  const persist = (u: User, t: string) => {
+  const persist = useCallback((u: User, t: string) => {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify({ user: u, token: t }))
-  }
+  }, [])
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = useCallback(async (email: string, password: string): Promise<void> => {
     const data = await authService.login(email, password)
     const u: User = { ...data.user, subscribedTo: [] }
     setToken(data.access_token)
     setUser(u)
     persist(u, data.access_token)
-  }
+  }, [persist])
 
-  const signup = async (email: string, username: string, password: string): Promise<void> => {
+  const signup = useCallback(async (email: string, username: string, password: string): Promise<void> => {
     const data = await authService.signup(email, username, password)
     const u: User = { ...data.user, subscribedTo: [] }
     setToken(data.access_token)
     setUser(u)
     persist(u, data.access_token)
-  }
+  }, [persist])
 
-  const logout = (): void => {
+  const logout = useCallback((): void => {
+    disconnectSocket()
     setUser(null)
     setToken(null)
     sessionStorage.removeItem(SESSION_KEY)
-  }
+  }, [])
 
-  const updateUser = (data: Partial<Omit<User, "id" | "email" | "subscribedTo">>): void => {
+  const updateUser = useCallback((data: Partial<Omit<User, "id" | "email" | "subscribedTo">>): void => {
     setUser((prev) => {
       if (!prev) return prev
       const updated = { ...prev, ...data }
       if (token) persist(updated, token)
       return updated
     })
-  }
+  }, [persist, token])
 
   const contextValue = useMemo(
     () => ({ user, token, login, signup, logout, updateUser, isAuthenticated: !!token }),

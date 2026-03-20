@@ -30,7 +30,6 @@ function PostDetail() {
         setPost(data)
         setLikes(data.likes)
         if (token) {
-          // Erreurs subscription/likes isolées — ne bloquent pas l'affichage du post
           const [subs, likedIds] = await Promise.allSettled([
             getUserSubscriptions(token),
             getLikedPostIds(token),
@@ -54,27 +53,16 @@ function PostDetail() {
 
   const handleLike = () => {
     if (!token) return
-
     const wasLiked = isLiked
     setIsLiked(!wasLiked)
     setLikes((prev) => wasLiked ? Math.max(0, prev - 1) : prev + 1)
-
     fetch(`/api/posts/${id}/like`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => {
-        if (!res.ok) throw new Error()
-        return res.json()
-      })
-      .then((result: { likes: number; isLiked: boolean }) => {
-        setLikes(result.likes)
-        setIsLiked(result.isLiked)
-      })
-      .catch(() => {
-        setIsLiked(wasLiked)
-        setLikes((prev) => wasLiked ? prev + 1 : Math.max(0, prev - 1))
-      })
+      .then((res) => { if (!res.ok) throw new Error(); return res.json() })
+      .then((result: { likes: number; isLiked: boolean }) => { setLikes(result.likes); setIsLiked(result.isLiked) })
+      .catch(() => { setIsLiked(wasLiked); setLikes((prev) => wasLiked ? prev + 1 : Math.max(0, prev - 1)) })
   }
 
   const handleSubmitComment = async () => {
@@ -94,7 +82,7 @@ function PostDetail() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-24">
-        <div className="text-slate-400 text-sm animate-pulse">Chargement...</div>
+        <div className="text-[#8a8a8a] text-sm animate-pulse">Chargement...</div>
       </div>
     )
   }
@@ -108,15 +96,15 @@ function PostDetail() {
   if (locked) {
     return (
       <div className="max-w-2xl mx-auto flex flex-col gap-6">
-        <div className="flex items-center gap-2 text-sm text-slate-400">
-          <Link to="/feed" className="hover:text-slate-700 transition-colors">Fil</Link>
+        <div className="flex items-center gap-2 text-sm text-[#8a8a8a]">
+          <Link to="/feed" className="hover:text-white transition-colors">Courants d'air</Link>
           <span>/</span>
-          <Link to={`/creators/${post.creator.id}`} className="hover:text-slate-700 transition-colors">
+          <Link to={`/creators/${post.creator.id}`} className="hover:text-white transition-colors">
             {post.creator.displayName}
           </Link>
         </div>
 
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <div className="bg-[#111] rounded-2xl border border-[#2a2a2a] overflow-hidden">
           {/* Image floutée */}
           <div className="relative">
             <img
@@ -125,8 +113,10 @@ function PostDetail() {
               className="w-full object-cover max-h-[320px] blur-sm scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/70 flex flex-col items-center justify-center gap-3">
-              <span className="text-4xl">🔒</span>
-              <span className="text-white text-lg font-bold">Contenu premium</span>
+              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+              <span className="text-white text-lg font-bold">Contenu Haute Pression</span>
             </div>
           </div>
 
@@ -135,34 +125,34 @@ function PostDetail() {
             <Link to={`/creators/${post.creator.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
               <img src={post.creator.avatar} alt={post.creator.displayName} className="w-12 h-12 rounded-full object-cover" />
               <div className="text-left">
-                <div className="font-bold text-slate-900">{post.creator.displayName}</div>
-                <div className="text-sm text-slate-400">@{post.creator.username}</div>
+                <div className="font-bold text-white">{post.creator.displayName}</div>
+                <div className="text-sm text-[#8a8a8a]">@{post.creator.username}</div>
               </div>
             </Link>
 
             <div>
-              <h2 className="text-xl font-bold text-slate-900 mb-1">{post.title}</h2>
-              <p className="text-slate-500 text-sm">Ce post est réservé aux abonnés de {post.creator.displayName}.</p>
+              <h2 className="text-xl font-bold text-white mb-1">{post.title}</h2>
+              <p className="text-[#8a8a8a] text-sm">Ce souffle est réservé aux Souffleurs de {post.creator.displayName}.</p>
             </div>
 
             <div className="flex flex-col gap-3 w-full max-w-xs">
               {token ? (
                 <Link
                   to={`/subscribe/${post.creator.id}`}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl text-sm transition-colors text-center"
+                  className="bg-[#00AFF0] hover:bg-[#0099CC] text-white font-semibold px-6 py-3 rounded-xl text-sm transition-colors text-center"
                 >
-                  S'abonner — {post.creator.subscriptionPrice.toFixed(2)} €/mois
+                  Rejoindre les Souffleurs — {post.creator.subscriptionPrice.toFixed(2)} €/mois
                 </Link>
               ) : (
                 <Link
                   to="/login"
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl text-sm transition-colors text-center"
+                  className="bg-[#00AFF0] hover:bg-[#0099CC] text-white font-semibold px-6 py-3 rounded-xl text-sm transition-colors text-center"
                 >
                   Se connecter pour s'abonner
                 </Link>
               )}
-              <Link to="/feed" className="text-sm text-slate-400 hover:text-slate-600 transition-colors">
-                ← Retour au fil
+              <Link to="/feed" className="text-sm text-[#8a8a8a] hover:text-white transition-colors">
+                ← Retour aux courants d'air
               </Link>
             </div>
           </div>
@@ -175,14 +165,14 @@ function PostDetail() {
     <div className="max-w-2xl mx-auto flex flex-col gap-6">
 
       {/* Fil d'ariane */}
-      <div className="flex items-center gap-2 text-sm text-slate-400">
-        <Link to="/feed" className="hover:text-slate-700 transition-colors">Fil</Link>
+      <div className="flex items-center gap-2 text-sm text-[#8a8a8a]">
+        <Link to="/feed" className="hover:text-white transition-colors">Courants d'air</Link>
         <span>/</span>
-        <Link to={`/creators/${post.creator.id}`} className="hover:text-slate-700 transition-colors">
+        <Link to={`/creators/${post.creator.id}`} className="hover:text-white transition-colors">
           {post.creator.displayName}
         </Link>
         <span>/</span>
-        <span className="text-slate-600 truncate">{post.title}</span>
+        <span className="text-[#555] truncate">{post.title}</span>
       </div>
 
       {/* Créateur */}
@@ -196,8 +186,8 @@ function PostDetail() {
           className="w-10 h-10 rounded-full object-cover"
         />
         <div>
-          <div className="font-semibold text-slate-900">{post.creator.displayName}</div>
-          <div className="text-xs text-slate-400">{post.creator.username}</div>
+          <div className="font-semibold text-white">{post.creator.displayName}</div>
+          <div className="text-xs text-[#8a8a8a]">{post.creator.username}</div>
         </div>
       </Link>
 
@@ -211,23 +201,21 @@ function PostDetail() {
       {/* Contenu */}
       <div className="flex flex-col gap-4">
         <div className="flex items-start justify-between gap-4">
-          <h1 className="text-2xl font-bold text-slate-900">{post.title}</h1>
+          <h1 className="text-2xl font-bold text-white">{post.title}</h1>
           <button
             onClick={handleLike}
             className={`flex items-center gap-1.5 transition-colors shrink-0 ${
-              isLiked ? "text-red-500" : "text-slate-400 hover:text-red-500"
+              isLiked ? "text-red-500" : "text-[#555] hover:text-red-500"
             }`}
           >
-            <span>{isLiked ? "❤️" : "🤍"}</span>
-            <span className="font-semibold">{likes.toLocaleString("fr-FR")}</span>
+            <svg className="w-5 h-5" fill={isLiked ? "currentColor" : "none"} stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+            </svg>
+            <span className="font-semibold">{likes.toLocaleString("fr-FR")} rafales</span>
           </button>
         </div>
 
-        {locked ? (
-          <p className="text-slate-400 italic text-sm">Abonnez-vous pour lire la description complète.</p>
-        ) : (
-          <p className="text-slate-600 leading-relaxed">{post.description}</p>
-        )}
+        <p className="text-[#8a8a8a] leading-relaxed">{post.description}</p>
 
         {/* Tags */}
         {post.tags.length > 0 && (
@@ -235,7 +223,7 @@ function PostDetail() {
             {post.tags.map((tag) => (
               <span
                 key={tag}
-                className="text-xs bg-slate-100 text-slate-500 px-3 py-1 rounded-full"
+                className="text-xs bg-[#2a2a2a] text-[#8a8a8a] px-3 py-1 rounded-full"
               >
                 #{tag}
               </span>
@@ -243,32 +231,14 @@ function PostDetail() {
           </div>
         )}
 
-        {/* Abonnement requis */}
-        {locked && (
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between gap-4">
-            <div>
-              <div className="font-semibold text-blue-900 text-sm">Contenu premium</div>
-              <div className="text-xs text-blue-600 mt-0.5">
-                Abonnez-vous à {post.creator.displayName} pour voir ce post
-              </div>
-            </div>
-            <Link
-              to={`/subscribe/${post.creator.id}`}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors shrink-0"
-            >
-              S'abonner — {post.creator.subscriptionPrice.toFixed(2)} €/mois
-            </Link>
-          </div>
-        )}
-
-        <div className="text-xs text-slate-400">
+        <div className="text-xs text-[#555]">
           Publié le {new Date(post.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
         </div>
       </div>
 
       {/* Commentaires */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col gap-4">
-        <h2 className="font-bold text-slate-900">Commentaires ({comments.length})</h2>
+      <div className="bg-[#111] rounded-2xl border border-[#2a2a2a] p-6 flex flex-col gap-4">
+        <h2 className="font-bold text-white">Commentaires ({comments.length})</h2>
 
         {token ? (
           <div className="flex flex-col gap-2">
@@ -278,26 +248,26 @@ function PostDetail() {
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Écrire un commentaire..."
               rows={2}
-              className="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 resize-none text-sm"
+              className="input-of resize-none text-sm"
             />
             <div className="flex justify-end">
               <button
                 onClick={handleSubmitComment}
                 disabled={isSubmitting || !newComment.trim()}
-                className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+                className="bg-[#00AFF0] hover:bg-[#0099CC] disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
               >
                 {isSubmitting ? "Envoi..." : "Commenter"}
               </button>
             </div>
           </div>
         ) : (
-          <p className="text-sm text-slate-400">
-            <Link to="/login" className="text-blue-600 hover:underline">Connecte-toi</Link> pour commenter.
+          <p className="text-sm text-[#8a8a8a]">
+            <Link to="/login" className="text-[#00AFF0] hover:underline">Connecte-toi</Link> pour commenter.
           </p>
         )}
 
         {comments.length === 0 ? (
-          <p className="text-sm text-slate-400">Soyez le premier à commenter !</p>
+          <p className="text-sm text-[#8a8a8a]">Soyez le premier à commenter !</p>
         ) : (
           <div className="flex flex-col gap-4">
             {comments.map((comment) => (
@@ -305,18 +275,18 @@ function PostDetail() {
                 {comment.avatar ? (
                   <img src={comment.avatar} alt={comment.username} className="w-8 h-8 rounded-full object-cover shrink-0" />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-[#00AFF0]/10 flex items-center justify-center text-xs font-bold text-[#00AFF0] shrink-0">
                     {comment.username.charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-2">
-                    <span className="font-semibold text-slate-900 text-sm">{comment.username}</span>
-                    <span className="text-xs text-slate-400">
+                    <span className="font-semibold text-white text-sm">{comment.username}</span>
+                    <span className="text-xs text-[#555]">
                       {new Date(comment.createdAt).toLocaleDateString("fr-FR")}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-700 mt-0.5">{comment.content}</p>
+                  <p className="text-sm text-[#8a8a8a] mt-0.5">{comment.content}</p>
                 </div>
               </div>
             ))}

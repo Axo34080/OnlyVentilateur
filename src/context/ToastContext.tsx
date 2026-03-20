@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState } from "react"
+import type { ReactNode } from "react"
 
 interface Toast {
   id: string
@@ -14,7 +15,7 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | null>(null)
 
-export function ToastProvider({ children }: Readonly<{ children: React.ReactNode }>) {
+export function ToastProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [toasts, setToasts] = useState<Toast[]>([])
 
   const removeToast = useCallback((id: string) => {
@@ -39,6 +40,7 @@ export function ToastProvider({ children }: Readonly<{ children: React.ReactNode
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useToast(): ToastContextType {
   const ctx = useContext(ToastContext)
   if (!ctx) throw new Error("useToast must be used inside ToastProvider")

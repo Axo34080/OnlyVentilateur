@@ -60,7 +60,14 @@ export function useDashboardViewModel(): DashboardViewModel {
   const [isUploadingGoodieImage, setIsUploadingGoodieImage] = useState(false)
 
   useEffect(() => {
-    if (!token || !user?.creatorId) return
+    if (!token) return
+    if (!user?.creatorId) {
+      setCreator(null)
+      setPosts([])
+      setIsLoading(false)
+      setError("Espace reserve aux createurs")
+      return
+    }
 
     const load = async () => {
       setIsLoading(true)
@@ -83,7 +90,12 @@ export function useDashboardViewModel(): DashboardViewModel {
   }, [token, user?.creatorId])
 
   useEffect(() => {
-    if (!token || !user?.creatorId) return
+    if (!token) return
+    if (!user?.creatorId) {
+      setGoodies([])
+      setGoodiesLoading(false)
+      return
+    }
     setGoodiesLoading(true)
     getGoodies(user.creatorId)
       .then(setGoodies)

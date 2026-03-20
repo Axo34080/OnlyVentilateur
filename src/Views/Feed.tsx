@@ -22,13 +22,13 @@ function Feed() {
   return (
     <div className="flex flex-col gap-6">
       {/* Onglets filtre style X.com */}
-      <div className="flex border-b border-slate-200">
+      <div className="flex border-b border-[#2a2a2a]">
         <button
           onClick={() => setFilter('nouveautes')}
           className={`flex-1 py-3 text-sm font-semibold transition-colors ${
             filter === 'nouveautes'
-              ? "text-slate-900 border-b-2 border-slate-900"
-              : "text-slate-400 hover:text-slate-700"
+              ? "text-white border-b-2 border-[#00AFF0]"
+              : "text-[#8a8a8a] hover:text-white"
           }`}
         >
           Nouveautés
@@ -37,8 +37,8 @@ function Feed() {
           onClick={() => setFilter('abonnements')}
           className={`flex-1 py-3 text-sm font-semibold transition-colors ${
             filter === 'abonnements'
-              ? "text-slate-900 border-b-2 border-slate-900"
-              : "text-slate-400 hover:text-slate-700"
+              ? "text-white border-b-2 border-[#00AFF0]"
+              : "text-[#8a8a8a] hover:text-white"
           }`}
         >
           Abonnements
@@ -46,7 +46,7 @@ function Feed() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
+        <div className="bg-red-900/20 border border-red-800 text-red-400 rounded-xl px-4 py-3 text-sm">
           ⚠️ {error}
         </div>
       )}
@@ -54,20 +54,20 @@ function Feed() {
       {!error && isLoading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={`skeleton-${i}`} className="bg-white rounded-2xl border border-slate-200 h-64 animate-pulse" />
+            <div key={`skeleton-${i}`} className="bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a] h-64 animate-pulse" />
           ))}
         </div>
       )}
 
       {!error && !isLoading && visiblePosts.length === 0 && (
-        <div className="text-center py-16 text-slate-400">
+        <div className="text-center py-16 text-[#8a8a8a]">
           {filter === 'abonnements'
             ? "Tu n'es abonné à aucun créateur pour l'instant."
             : "Aucun post disponible."
           }
           {filter === 'abonnements' && (
             <div className="mt-3">
-              <Link to="/creators" className="text-blue-600 hover:underline text-sm font-medium">
+              <Link to="/creators" className="text-[#00AFF0] hover:underline text-sm font-medium">
                 Découvrir des créateurs →
               </Link>
             </div>
@@ -92,8 +92,8 @@ function Feed() {
                         alt={creator.displayName}
                         className="w-7 h-7 rounded-full object-cover"
                       />
-                      <span className="text-sm font-medium text-slate-700">{creator.displayName}</span>
-                      <span className="text-xs text-slate-400">{creator.username}</span>
+                      <span className="text-sm font-medium text-white">{creator.displayName}</span>
+                      <span className="text-xs text-[#8a8a8a]">{creator.username}</span>
                     </Link>
                   )}
                   <PostCard post={post} isSubscribed={isCreatorSubscribed(post.creatorId)} isLiked={isPostLiked(post.id)} onLike={handleLike} />
@@ -108,13 +108,13 @@ function Feed() {
           {isFetchingMore && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={`skeleton-${i}`} className="bg-white rounded-2xl border border-slate-200 h-64 animate-pulse" />
+                <div key={`skeleton-${i}`} className="bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a] h-64 animate-pulse" />
               ))}
             </div>
           )}
 
           {!hasMore && visiblePosts.length > 0 && (
-            <p className="text-center text-sm text-slate-400 py-4">— Fin du fil —</p>
+            <p className="text-center text-sm text-[#555] py-4">— Fin du fil —</p>
           )}
         </>
       )}

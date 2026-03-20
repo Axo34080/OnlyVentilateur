@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import { ToastProvider } from './context/ToastContext'
-import Navbar from './components/Navbar'
+import Sidebar from './components/Sidebar'
 import ToastContainer from './components/ToastContainer'
 import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
@@ -30,10 +30,11 @@ function App() {
       <CartProvider>
         <ToastProvider>
         <BrowserRouter>
-          <div className="min-h-screen bg-slate-50">
-            <Navbar />
+          <div className="min-h-screen">
+            <Sidebar />
             <ToastContainer />
-            <main className="max-w-6xl mx-auto px-4 py-8">
+            <main className="lg:ml-[240px] min-h-screen pt-14 lg:pt-0">
+              <div className="max-w-4xl mx-auto px-6 py-8">
               <Routes>
                 {/* Routes publiques */}
                 <Route path="/" element={<Home />} />
@@ -65,6 +66,7 @@ function App() {
                 {/* 404 */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
+            </div>
             </main>
           </div>
         </BrowserRouter>

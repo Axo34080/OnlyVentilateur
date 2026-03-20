@@ -51,13 +51,13 @@ export function useNewPostViewModel(): NewPostViewModel {
       .then((posts) => {
         const post = posts.find((p) => p.id === id)
         if (post) {
-          setForm({
-            title: post.title,
-            description: post.description,
-            image: post.image,
-            isLocked: post.isLocked,
-            price: post.price?.toString() ?? "",
-            tags: post.tags.join(", "),
+            setForm({
+              title: post.title,
+              description: post.description,
+              image: post.image ?? "",
+              isLocked: post.isLocked,
+              price: post.price?.toString() ?? "",
+              tags: post.tags.join(", "),
           })
         }
       })

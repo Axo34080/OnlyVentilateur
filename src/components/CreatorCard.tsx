@@ -9,11 +9,11 @@ function CreatorCard({ creator }: Props) {
   return (
     <Link
       to={`/creators/${creator.id}`}
-      className="block bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+      className="block bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a] shadow-sm overflow-hidden hover:border-[#00AFF0]/30 transition-colors"
     >
 
       {/* Cover */}
-      <div className="h-24 bg-slate-100 overflow-hidden">
+      <div className="h-24 bg-[#111] overflow-hidden">
         <img
           src={creator.coverImage}
           alt=""
@@ -28,49 +28,49 @@ function CreatorCard({ creator }: Props) {
             <img
               src={creator.avatar}
               alt={creator.displayName}
-              className="w-16 h-16 rounded-full border-4 border-white object-cover shadow-sm"
+              className="w-16 h-16 rounded-full border-4 border-[#1a1a1a] object-cover shadow-sm"
             />
           ) : (
-            <div className="w-16 h-16 rounded-full border-4 border-white bg-blue-100 flex items-center justify-center shadow-sm">
-              <span className="text-blue-600 font-bold text-xl">{creator.displayName.charAt(0).toUpperCase()}</span>
+            <div className="w-16 h-16 rounded-full border-4 border-[#1a1a1a] flex items-center justify-center shadow-sm" style={{ backgroundColor: '#00AFF0' }}>
+              <span className="text-white font-bold text-xl">{creator.displayName.charAt(0).toUpperCase()}</span>
             </div>
           )}
           {creator.isPremium && (
-            <span className="text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
-              ⭐ Premium
+            <span className="text-xs font-semibold bg-[#00AFF0]/10 text-[#00AFF0] px-2 py-1 rounded-full">
+              Turbo
             </span>
           )}
         </div>
 
         {/* Nom + username */}
-        <h3 className="font-bold text-slate-900 text-base leading-tight">
+        <h3 className="font-bold text-white text-base leading-tight">
           {creator.displayName}
         </h3>
-        <p className="text-sm text-slate-400 mb-2">{creator.username}</p>
+        <p className="text-sm text-[#8a8a8a] mb-2">{creator.username}</p>
 
         {/* Bio */}
-        <p className="text-sm text-slate-600 line-clamp-2 mb-4">{creator.bio}</p>
+        <p className="text-sm text-[#8a8a8a] line-clamp-2 mb-4">{creator.bio}</p>
 
         {/* Stats */}
-        <div className="flex gap-4 text-sm text-slate-500 mb-4">
+        <div className="flex gap-4 text-sm text-[#8a8a8a] mb-4">
           <span>
-            <span className="font-semibold text-slate-800">
+            <span className="font-semibold text-white">
               {(creator.subscriberCount ?? 0).toLocaleString("fr-FR")}
             </span>{" "}
-            abonnés
+            souffleurs
           </span>
           <span>
-            <span className="font-semibold text-slate-800">{creator.postCount ?? 0}</span>{" "}
-            posts
+            <span className="font-semibold text-white">{creator.postCount ?? 0}</span>{" "}
+            rafales
           </span>
         </div>
 
         {/* Prix */}
         <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold text-blue-600">
-            {creator.subscriptionPrice.toFixed(2)} €<span className="font-normal text-slate-400">/mois</span>
+          <span className="text-sm font-semibold text-[#00AFF0]">
+            {creator.subscriptionPrice.toFixed(2)} €<span className="font-normal text-[#8a8a8a]"> souffle/mois</span>
           </span>
-          <span className="text-sm text-blue-600 font-medium">Voir le profil →</span>
+          <span className="text-sm text-[#00AFF0] font-medium">Sentir le souffle →</span>
         </div>
       </div>
 

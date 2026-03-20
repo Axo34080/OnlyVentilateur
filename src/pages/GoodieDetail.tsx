@@ -34,14 +34,14 @@ function GoodieDetail() {
   if (isLoading) {
     return (
       <div className="max-w-3xl mx-auto flex flex-col gap-6">
-        <div className="h-8 w-32 bg-slate-200 rounded animate-pulse" />
+        <div className="h-8 w-32 bg-[#2a2a2a] rounded animate-pulse" />
         <div className="flex gap-8">
-          <div className="w-80 aspect-square bg-slate-200 rounded-2xl animate-pulse" />
+          <div className="w-80 aspect-square bg-[#2a2a2a] rounded-2xl animate-pulse" />
           <div className="flex-1 flex flex-col gap-4">
-            <div className="h-7 w-2/3 bg-slate-200 rounded animate-pulse" />
-            <div className="h-4 w-1/3 bg-slate-200 rounded animate-pulse" />
-            <div className="h-20 bg-slate-200 rounded animate-pulse" />
-            <div className="h-10 w-40 bg-slate-200 rounded-lg animate-pulse" />
+            <div className="h-7 w-2/3 bg-[#2a2a2a] rounded animate-pulse" />
+            <div className="h-4 w-1/3 bg-[#2a2a2a] rounded animate-pulse" />
+            <div className="h-20 bg-[#2a2a2a] rounded animate-pulse" />
+            <div className="h-10 w-40 bg-[#2a2a2a] rounded-lg animate-pulse" />
           </div>
         </div>
       </div>
@@ -51,8 +51,8 @@ function GoodieDetail() {
   if (error || !goodie) {
     return (
       <div className="text-center py-16">
-        <p className="text-slate-400 mb-4">{error ?? "Goodie introuvable."}</p>
-        <Link to="/shop" className="text-blue-600 hover:underline text-sm">← Retour à la boutique</Link>
+        <p className="text-[#8a8a8a] mb-4">{error ?? "Goodie introuvable."}</p>
+        <Link to="/shop" className="text-[#00AFF0] hover:underline text-sm">← Retour à la boutique</Link>
       </div>
     )
   }
@@ -60,9 +60,9 @@ function GoodieDetail() {
   const cartKey = selectedVariant ? `${goodie.id}|${selectedVariant}` : goodie.id
   const inCart = items.find((i) => i.cartKey === cartKey)
 
-  let cartBtnClass = "bg-blue-600 hover:bg-blue-700 text-white"
-  if (added) cartBtnClass = "bg-green-100 text-green-700"
-  else if (inCart) cartBtnClass = "bg-blue-50 text-blue-600 border border-blue-200"
+  let cartBtnClass = "bg-[#00AFF0] hover:bg-[#0099CC] text-white"
+  if (added) cartBtnClass = "bg-green-900/30 text-green-400"
+  else if (inCart) cartBtnClass = "bg-[#00AFF0]/10 text-[#00AFF0] border border-[#00AFF0]/30"
 
   let cartBtnLabel: string = "Ajouter au panier"
   if (added) cartBtnLabel = "Ajouté !"
@@ -70,7 +70,7 @@ function GoodieDetail() {
 
   return (
     <div className="max-w-3xl mx-auto flex flex-col gap-6">
-      <Link to="/shop" className="text-sm text-slate-400 hover:text-slate-700 transition-colors w-fit">
+      <Link to="/shop" className="text-sm text-[#8a8a8a] hover:text-white transition-colors w-fit">
         ← Retour à la boutique
       </Link>
 
@@ -78,18 +78,18 @@ function GoodieDetail() {
         <img
           src={goodie.image}
           alt={goodie.name}
-          className="w-full sm:w-80 aspect-square object-cover rounded-2xl bg-slate-100 shrink-0"
+          className="w-full sm:w-80 aspect-square object-cover rounded-2xl bg-[#1a1a1a] shrink-0"
         />
 
         <div className="flex flex-col gap-4 flex-1">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">{goodie.name}</h1>
+            <h1 className="text-2xl font-bold text-white">{goodie.name}</h1>
             {goodie.creator && (
-              <p className="text-sm text-slate-400 mt-1">
+              <p className="text-sm text-[#8a8a8a] mt-1">
                 par{" "}
                 <Link
                   to={`/creators/${goodie.creatorId}`}
-                  className="text-blue-600 hover:underline"
+                  className="text-[#00AFF0] hover:underline"
                 >
                   {goodie.creator.displayName}
                 </Link>
@@ -98,18 +98,18 @@ function GoodieDetail() {
           </div>
 
           {goodie.description && (
-            <p className="text-slate-600 text-sm leading-relaxed">{goodie.description}</p>
+            <p className="text-[#8a8a8a] text-sm leading-relaxed">{goodie.description}</p>
           )}
 
           {/* Sélecteur de variante */}
           {hasVariants && (
             <div className="flex flex-col gap-2">
-              <span className="text-sm font-medium text-slate-700">
+              <span className="text-sm font-medium text-[#8a8a8a]">
                 {goodie.variants![0].match(/^(S|M|L|XL|XXL|S\/M|L\/XL)$/)
                   ? "Taille"
                   : "Coloris"}
                 {selectedVariant && (
-                  <span className="ml-2 font-semibold text-slate-900">{selectedVariant}</span>
+                  <span className="ml-2 font-semibold text-white">{selectedVariant}</span>
                 )}
               </span>
               <div className="flex gap-2 flex-wrap">
@@ -119,8 +119,8 @@ function GoodieDetail() {
                     onClick={() => setSelectedVariant(v)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium border-2 transition-colors ${
                       selectedVariant === v
-                        ? "border-blue-600 bg-blue-50 text-blue-700"
-                        : "border-slate-200 text-slate-700 hover:border-slate-300"
+                        ? "border-[#00AFF0] bg-[#00AFF0]/10 text-[#00AFF0]"
+                        : "border-[#2a2a2a] text-[#8a8a8a] hover:border-[#555]"
                     }`}
                   >
                     {v}
@@ -128,13 +128,13 @@ function GoodieDetail() {
                 ))}
               </div>
               {needsVariant && (
-                <p className="text-xs text-amber-600">Sélectionne une option avant d'ajouter au panier.</p>
+                <p className="text-xs text-amber-400">Sélectionne une option avant d'ajouter au panier.</p>
               )}
             </div>
           )}
 
-          <div className="flex items-center gap-4 mt-auto pt-4 border-t border-slate-100">
-            <span className="text-3xl font-bold text-slate-900">{Number(goodie.price).toFixed(2)} €</span>
+          <div className="flex items-center gap-4 mt-auto pt-4 border-t border-[#2a2a2a]">
+            <span className="text-3xl font-bold text-white">{Number(goodie.price).toFixed(2)} €</span>
 
             {goodie.inStock ? (
               <button
@@ -145,8 +145,8 @@ function GoodieDetail() {
                 {cartBtnLabel}
               </button>
             ) : (
-              <span className="px-6 py-2.5 rounded-xl font-semibold text-sm bg-slate-100 text-slate-400">
-                Rupture de stock
+              <span className="px-6 py-2.5 rounded-xl font-semibold text-sm bg-[#2a2a2a] text-[#555]">
+                Rupture de souffle
               </span>
             )}
           </div>

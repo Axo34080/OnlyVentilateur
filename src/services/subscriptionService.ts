@@ -7,7 +7,10 @@ export async function subscribe(creatorId: string, token: string): Promise<void>
     },
     body: JSON.stringify({ creatorId }),
   })
-  if (!res.ok) throw new Error("Erreur lors de l'abonnement")
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body?.message ?? "Erreur lors de l'abonnement")
+  }
 }
 
 export async function unsubscribe(creatorId: string, token: string): Promise<void> {
@@ -15,14 +18,17 @@ export async function unsubscribe(creatorId: string, token: string): Promise<voi
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` },
   })
-  if (!res.ok) throw new Error("Erreur lors du désabonnement")
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body?.message ?? "Erreur lors du desabonnement")
+  }
 }
 
 export async function getUserSubscriptions(token: string): Promise<string[]> {
   const res = await fetch("/api/subscriptions", {
     headers: { Authorization: `Bearer ${token}` },
   })
-  if (!res.ok) throw new Error("Erreur lors de la récupération des abonnements")
+  if (!res.ok) throw new Error("Erreur lors de la recuperation des abonnements")
   const data = await res.json()
   return data.map((sub: { creator: { id: string } }) => sub.creator.id)
 }
@@ -47,7 +53,7 @@ export async function getSubscribedCreators(token: string) {
   const res = await fetch("/api/subscriptions", {
     headers: { Authorization: `Bearer ${token}` },
   })
-  if (!res.ok) throw new Error("Erreur lors de la récupération des abonnements")
+  if (!res.ok) throw new Error("Erreur lors de la recuperation des abonnements")
   const data = await res.json()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return data.map((sub: { creator: any }) => mapCreatorFromSub(sub.creator))
