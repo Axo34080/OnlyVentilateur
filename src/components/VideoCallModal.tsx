@@ -9,6 +9,8 @@ type Props = Readonly<{
 function VideoCallModal({ roomUrl, onClose }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const callFrameRef = useRef<ReturnType<typeof DailyIframe.createFrame> | null>(null)
+  const onCloseRef = useRef(onClose)
+  useEffect(() => { onCloseRef.current = onClose })
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -26,13 +28,13 @@ function VideoCallModal({ roomUrl, onClose }: Props) {
 
     callFrameRef.current.join({ url: roomUrl }).catch(() => null)
 
-    callFrameRef.current.on('left-meeting', onClose)
+    callFrameRef.current.on('left-meeting', () => onCloseRef.current())
 
     return () => {
       callFrameRef.current?.destroy()
       callFrameRef.current = null
     }
-  }, [roomUrl, onClose])
+  }, [roomUrl])
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
