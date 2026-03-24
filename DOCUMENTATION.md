@@ -22,6 +22,7 @@ Fonctionnalites principales :
 - checkout Stripe en mode demo
 - notifications
 - chat prive, transfert de fichiers P2P, appel video Daily.co
+- toggle confidentialite : autoriser / bloquer les appels video entrants
 
 ---
 
@@ -30,12 +31,14 @@ Fonctionnalites principales :
 ### Principes importants
 
 - tout utilisateur inscrit devient automatiquement createur
-- `/profile` sert surtout de point d'entree vers le profil createur et l'edition
+- `/creators/:id` est la page profil en lecture seule ; toute modification passe par `/profile/edit`
+- l'avatar dans la sidebar navigue vers le profil createur (`/creators/:id`) ou vers `/profile/edit` pour les non-createurs
 - les paiements Stripe sont en **mode demo**
 - l'abonnement premium est finalise au retour du checkout par `POST /api/subscriptions`
 - `POST /api/subscriptions` est traite de facon idempotente
-- `PATCH /api/users/me` est borne a `username`, `bio`, `avatar`
+- `PATCH /api/users/me` accepte `username`, `bio`, `avatar`, `allowVideoCall`
 - le logout frontend ferme aussi la connexion Socket.IO
+- `CallContext` gere l'etat global des appels video (entrant, sortant, en attente) independamment de la route active
 
 ### Verification connue
 
@@ -105,7 +108,7 @@ src/
 |-- ViewModels/     # logique metier sous forme de hooks
 |-- pages/          # routes simples
 |-- components/     # composants UI reutilisables
-|-- context/        # Auth, Cart, Toast
+|-- context/        # Auth, Cart, Toast, Call
 |-- services/       # appels API / socket / webRTC
 |-- types/          # interfaces TypeScript
 `-- data/           # anciens mocks conserves en reference
@@ -183,6 +186,7 @@ interface User {
   bio?: string
   subscribedTo: string[]
   creatorId?: string
+  allowVideoCall?: boolean  // toggle confidentialite appels video (defaut: true)
 }
 ```
 
@@ -248,6 +252,15 @@ Responsabilites :
 - expose `login`, `signup`, `logout`, `updateUser`
 - persiste la session en `sessionStorage`
 - coupe Socket.IO au logout
+
+### CallContext
+
+Responsabilites :
+
+- gere l'etat global des appels video (disponible sur toutes les routes)
+- ecoute les evenements socket `incoming_call`, `call_accepted`, `call_rejected`, `call_blocked`
+- expose `startCall`, `acceptIncomingCall`, `rejectIncomingCall`, `closeCall`
+- affiche `IncomingCallBanner`, `CallerWaitingOverlay` et `VideoCallModal` via `GlobalCallUI`
 
 ### CartContext
 
@@ -328,7 +341,7 @@ Fonctionnalites :
 | Methode | Route | Auth | Description |
 | --- | --- | --- | --- |
 | GET | `/api/users/me` | JWT | Profil connecte |
-| PATCH | `/api/users/me` | JWT | Modifie `username`, `bio`, `avatar` |
+| PATCH | `/api/users/me` | JWT | Modifie `username`, `bio`, `avatar`, `allowVideoCall` |
 | GET | `/api/users/:id` | Non | Profil public |
 
 #### Creators
@@ -408,10 +421,11 @@ Evenements principaux :
 - `webrtc_offer`
 - `webrtc_answer`
 - `webrtc_ice_candidate`
-- `call_request`
-- `incoming_call`
-- `call_accepted`
-- `call_rejected`
+- `call_request` — emis par l'appelant avec `targetUserId` + `roomUrl`
+- `incoming_call` — recu par l'appele, contient `fromUserId`, `roomUrl`, `callerUsername`
+- `call_accepted` — emis par l'appele pour accepter, recu par l'appelant
+- `call_rejected` — emis par l'appele pour refuser, recu par l'appelant
+- `call_blocked` — recu par l'appelant si l'appele a desactive `allowVideoCall`
 
 ---
 
@@ -525,6 +539,19 @@ Cette section garde une trace de ce qui a ete fait, meme si certaines etapes int
 - [x] `npm run lint` frontend OK
 - [x] `npm run build` backend OK
 - [x] `npm test -- --runInBand` backend OK
+
+### Phase 9 - Appels video et confidentialite
+
+- [x] fix "Duplicate DailyIframe instances" : suppression de `<StrictMode>`
+- [x] `CallContext` : etat global appels video (fonctionne sur toutes les routes)
+- [x] `IncomingCallBanner` : notification entrant avec nom de l'appelant
+- [x] `CallerWaitingOverlay` : ecran attente pour l'appelant avec timer
+- [x] `GlobalCallUI` : orchestration des composants appel dans `App.tsx`
+- [x] `allowVideoCall` : colonne BDD + DTO + service + toggle UI dans `/profile/edit`
+- [x] gateway : verifie `allowVideoCall` avant d'emettre `incoming_call`, sinon `call_blocked`
+- [x] gateway : `handleConnection` recupere le `username` pour l'inclure dans `incoming_call`
+- [x] page createur en lecture seule : edition uniquement via `/profile/edit`
+- [x] sidebar : avatar navigue vers `/creators/:id` (ou `/profile/edit` si non-createur)
 
 ---
 

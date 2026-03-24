@@ -6,4 +6,5 @@ export interface User {
   bio?: string
   subscribedTo: string[]
   creatorId?: string
+  allowVideoCall?: boolean
 }

@@ -28,6 +28,7 @@ interface UserProfileViewModel {
   error: string | null
   creatorError: string | null
   subscriptions: Creator[]
+  allowVideoCall: boolean
   handleEdit: () => void
   handleCancel: () => void
   handleSave: () => Promise<void>
@@ -38,12 +39,14 @@ interface UserProfileViewModel {
   handleCancelCreator: () => void
   handleSaveCreator: () => Promise<void>
   handleCreatorChange: (field: keyof CreatorForm, value: string) => void
+  handleToggleVideoCall: () => Promise<void>
 }
 
 export function useUserProfileViewModel(): UserProfileViewModel {
   const { user, token, updateUser } = useAuth()
   const { showToast } = useToast()
 
+  const [allowVideoCall, setAllowVideoCall] = useState<boolean>(user?.allowVideoCall ?? true)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -221,10 +224,29 @@ export function useUserProfileViewModel(): UserProfileViewModel {
     setCreatorForm((prev) => ({ ...prev, [field]: value }))
   }
 
+  const handleToggleVideoCall = async () => {
+    const newValue = !allowVideoCall
+    setAllowVideoCall(newValue)
+    try {
+      const res = await fetch("/api/users/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ allowVideoCall: newValue }),
+      })
+      if (!res.ok) throw new Error()
+      updateUser({ allowVideoCall: newValue })
+      showToast(newValue ? "Appels vidéo activés" : "Appels vidéo désactivés", "success")
+    } catch {
+      setAllowVideoCall(!newValue)
+      showToast("Erreur lors de la mise à jour", "error")
+    }
+  }
+
   return {
     user, form, creatorForm, creatorData,
     isEditing, isEditingCreator, isSaving, isSavingCreator,
     error, creatorError, subscriptions,
+    allowVideoCall, handleToggleVideoCall,
     handleEdit, handleCancel, handleSave, handleChange, handleAvatarChange, handleUnsubscribe,
     handleEditCreator, handleCancelCreator, handleSaveCreator, handleCreatorChange,
   }

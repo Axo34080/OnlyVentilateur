@@ -22,19 +22,10 @@ import { useAuth } from "../context/AuthContext"
 import { useToast } from "../context/ToastContext"
 import { getCreatorById, getLikedPostIds } from "../services/creatorsService"
 import { unsubscribe, getUserSubscriptions, getSubscribedCreators } from "../services/subscriptionService"
-import { uploadFile } from "../services/uploadService"
 import { getGoodies } from "../services/goodiesService"
 import type { Goodie } from "../services/goodiesService"
 import type { Creator } from "../types/Creator"
 import type { Post } from "../types/Post"
-
-interface ProfileForm {
-  displayName: string
-  bio: string
-  avatar: string
-  coverImage: string
-  subscriptionPrice: string
-}
 
 interface CreatorProfileViewModel {
   creator: Creator | null
@@ -45,30 +36,15 @@ interface CreatorProfileViewModel {
   isLoading: boolean
   isOwnProfile: boolean
   error: string | null
-  // Édition du profil (page créateur own)
-  isEditingProfile: boolean
-  isSavingProfile: boolean
-  profileForm: ProfileForm
-  profileError: string | null
   subscriptions: Creator[]
-  handleEditProfile: () => void
-  handleCancelEditProfile: () => void
-  handleSaveProfile: () => Promise<void>
-  handleProfileChange: (field: keyof ProfileForm, value: string) => void
-  isUploadingAvatar: boolean
-  isUploadingCover: boolean
-  handleAvatarFileChange: (file: File) => Promise<void>
-  handleCoverFileChange: (file: File) => Promise<void>
   handleUnsubscribeFromCreator: (targetId: string) => Promise<void>
-  // Abonnement
   handleSubscribe: () => Promise<void>
-  // Likes
   handleLike: (postId: string) => void
   isPostLiked: (postId: string) => boolean
 }
 
 export function useCreatorProfileViewModel(creatorId: string): CreatorProfileViewModel {
-  const { token, user, updateUser } = useAuth()
+  const { token, user } = useAuth()
   const navigate = useNavigate()
   const { showToast } = useToast()
 
@@ -79,20 +55,6 @@ export function useCreatorProfileViewModel(creatorId: string): CreatorProfileVie
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set())
-
-  // Édition du profil
-  const [isEditingProfile, setIsEditingProfile] = useState(false)
-  const [isSavingProfile, setIsSavingProfile] = useState(false)
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
-  const [isUploadingCover, setIsUploadingCover] = useState(false)
-  const [profileError, setProfileError] = useState<string | null>(null)
-  const [profileForm, setProfileForm] = useState<ProfileForm>({
-    displayName: "",
-    bio: "",
-    avatar: "",
-    coverImage: "",
-    subscriptionPrice: "",
-  })
   const [subscriptions, setSubscriptions] = useState<Creator[]>([])
   const [goodies, setGoodies] = useState<Goodie[]>([])
 
@@ -138,13 +100,11 @@ export function useCreatorProfileViewModel(creatorId: string): CreatorProfileVie
       .catch(() => {})
   }, [token])
 
-  // Charger les abonnements uniquement sur notre propre page
   useEffect(() => {
     if (!token || !user?.creatorId || user.creatorId !== creatorId) return
     getSubscribedCreators(token).then(setSubscriptions).catch(() => {})
   }, [token, user?.creatorId, creatorId])
 
-  // Charger les goodies du créateur
   useEffect(() => {
     if (!creatorId) return
     getGoodies(creatorId).then(setGoodies).catch(() => {})
@@ -200,109 +160,6 @@ export function useCreatorProfileViewModel(creatorId: string): CreatorProfileVie
 
   const isPostLiked = (postId: string) => likedPostIds.has(postId)
 
-  const handleEditProfile = () => {
-    setProfileForm({
-      displayName: creator?.displayName ?? "",
-      bio: creator?.bio ?? "",
-      avatar: creator?.avatar ?? "",
-      coverImage: creator?.coverImage ?? "",
-      subscriptionPrice: String(creator?.subscriptionPrice ?? ""),
-    })
-    setIsEditingProfile(true)
-    setProfileError(null)
-  }
-
-  const handleCancelEditProfile = () => {
-    setIsEditingProfile(false)
-    setProfileError(null)
-  }
-
-  const handleProfileChange = (field: keyof ProfileForm, value: string) => {
-    setProfileForm((prev) => ({ ...prev, [field]: value }))
-  }
-
-  const handleAvatarFileChange = async (file: File) => {
-    if (!token) return
-    setIsUploadingAvatar(true)
-    try {
-      const url = await uploadFile(file, token)
-      setProfileForm((prev) => ({ ...prev, avatar: url }))
-    } catch {
-      // silently fail — l'ancien avatar reste affiché
-    } finally {
-      setIsUploadingAvatar(false)
-    }
-  }
-
-  const handleCoverFileChange = async (file: File) => {
-    if (!token) return
-    setIsUploadingCover(true)
-    try {
-      const url = await uploadFile(file, token)
-      setProfileForm((prev) => ({ ...prev, coverImage: url }))
-    } catch {
-      // silently fail
-    } finally {
-      setIsUploadingCover(false)
-    }
-  }
-
-  const handleSaveProfile = async () => {
-    if (!token) return
-    setIsSavingProfile(true)
-    setProfileError(null)
-    try {
-      // Sauvegarder bio + avatar (profil utilisateur → synce aussi sur le créateur côté back)
-      const userRes = await fetch("/api/users/me", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          bio: profileForm.bio || undefined,
-          avatar: profileForm.avatar || undefined,
-        }),
-      })
-      if (!userRes.ok) throw new Error("Erreur lors de la sauvegarde du profil")
-      const updatedUser = await userRes.json()
-      updateUser({ bio: updatedUser.bio, avatar: updatedUser.avatar })
-
-      // Sauvegarder displayName + coverImage + prix (profil créateur)
-      const creatorRes = await fetch("/api/creators/me", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          displayName: profileForm.displayName || undefined,
-          coverImage: profileForm.coverImage || undefined,
-          subscriptionPrice: profileForm.subscriptionPrice
-            ? Number.parseFloat(profileForm.subscriptionPrice)
-            : undefined,
-        }),
-      })
-      if (!creatorRes.ok) throw new Error("Erreur lors de la sauvegarde du profil créateur")
-      const updatedCreator = await creatorRes.json()
-
-      setCreator((prev) =>
-        prev
-          ? {
-              ...prev,
-              displayName: updatedCreator.displayName ?? prev.displayName,
-              bio: updatedUser.bio ?? prev.bio,
-              avatar: updatedUser.avatar ?? prev.avatar,
-              coverImage: updatedCreator.coverImage ?? prev.coverImage,
-              subscriptionPrice: updatedCreator.subscriptionPrice ?? prev.subscriptionPrice,
-            }
-          : prev
-      )
-      setIsEditingProfile(false)
-      showToast("Profil mis à jour", "success")
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erreur lors de la sauvegarde"
-      setProfileError(msg)
-      showToast(msg, "error")
-    } finally {
-      setIsSavingProfile(false)
-    }
-  }
-
   const handleUnsubscribeFromCreator = async (targetId: string) => {
     if (!token) return
     try {
@@ -316,10 +173,6 @@ export function useCreatorProfileViewModel(creatorId: string): CreatorProfileVie
 
   return {
     creator, posts, goodies, isSubscribed, isCheckingSubscription, isLoading, error, isOwnProfile,
-    isEditingProfile, isSavingProfile, profileForm, profileError, subscriptions,
-    isUploadingAvatar, isUploadingCover,
-    handleEditProfile, handleCancelEditProfile, handleSaveProfile, handleProfileChange,
-    handleAvatarFileChange, handleCoverFileChange, handleUnsubscribeFromCreator,
-    handleSubscribe, handleLike, isPostLiked,
+    subscriptions, handleUnsubscribeFromCreator, handleSubscribe, handleLike, isPostLiked,
   }
 }

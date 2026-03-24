@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { getHistory, createVideoRoom, markConversationAsRead } from '../services/messagesService'
+import { getHistory, markConversationAsRead } from '../services/messagesService'
 import {
   connectSocket,
   sendMessage as socketSendMessage,
   onNewMessage,
-  requestCall,
 } from '../services/socketService'
 import {
   initiateFileTransfer,
@@ -26,9 +25,6 @@ export function useChatViewModel(otherUserId: string) {
   const [isLoading, setIsLoading] = useState(true)
   const [text, setText] = useState('')
   const [fileProgress, setFileProgress] = useState<number | null>(null)
-  const [videoRoomUrl, setVideoRoomUrl] = useState<string | null>(null)
-  const [incomingCall, setIncomingCall] = useState<{ fromUserId: string; roomUrl: string } | null>(null)
-  const [callError, setCallError] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   // Load history
@@ -77,27 +73,11 @@ export function useChatViewModel(otherUserId: string) {
       await handleIceCandidate(data)
     })
 
-    socket.on('incoming_call', (payload: { fromUserId: string; roomUrl: string }) => {
-      setIncomingCall(payload)
-    })
-
-    socket.on('call_accepted', () => {
-      // Room already open on caller side
-    })
-
-    socket.on('call_rejected', () => {
-      setVideoRoomUrl(null)
-      setCallError('Appel refusé')
-    })
-
     return () => {
       unsubMsg()
       socket.off('webrtc_offer')
       socket.off('webrtc_answer')
       socket.off('webrtc_ice_candidate')
-      socket.off('incoming_call')
-      socket.off('call_accepted')
-      socket.off('call_rejected')
     }
   }, [token, otherUserId, user?.id])
 
@@ -143,33 +123,6 @@ export function useChatViewModel(otherUserId: string) {
     [otherUserId],
   )
 
-  const startVideoCall = useCallback(async () => {
-    if (!token) return
-    setCallError(null)
-    try {
-      const { url } = await createVideoRoom(token)
-      setVideoRoomUrl(url)
-      requestCall(otherUserId, url)
-    } catch {
-      setCallError('Impossible de créer la room vidéo')
-    }
-  }, [token, otherUserId])
-
-  const closeVideoCall = useCallback(() => {
-    setVideoRoomUrl(null)
-    setIncomingCall(null)
-  }, [])
-
-  const acceptIncomingCall = useCallback(() => {
-    if (!incomingCall) return
-    setVideoRoomUrl(incomingCall.roomUrl)
-    setIncomingCall(null)
-  }, [incomingCall])
-
-  const rejectIncomingCall = useCallback(() => {
-    setIncomingCall(null)
-  }, [])
-
   return {
     messages,
     isLoading,
@@ -178,13 +131,6 @@ export function useChatViewModel(otherUserId: string) {
     sendText,
     sendFile,
     fileProgress,
-    videoRoomUrl,
-    incomingCall,
-    callError,
-    startVideoCall,
-    closeVideoCall,
-    acceptIncomingCall,
-    rejectIncomingCall,
     bottomRef,
     currentUserId: user?.id ?? '',
     otherUsername: locationState?.username ?? null,

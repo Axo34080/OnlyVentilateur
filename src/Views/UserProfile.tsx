@@ -105,6 +105,7 @@ function UserProfile() {
     user, form, creatorForm, creatorData,
     isEditing, isEditingCreator, isSaving, isSavingCreator,
     error, creatorError, subscriptions,
+    allowVideoCall, handleToggleVideoCall,
     handleEdit, handleCancel, handleSave, handleChange, handleAvatarChange, handleUnsubscribe,
     handleEditCreator, handleCancelCreator, handleSaveCreator, handleCreatorChange,
   } = useUserProfileViewModel()
@@ -213,6 +214,33 @@ function UserProfile() {
             </button>
           </div>
         )}
+      </div>
+
+      {/* Confidentialité */}
+      <div className="bg-[#111] rounded-2xl border border-[#2a2a2a] p-6">
+        <h2 className="font-bold text-white mb-4">Confidentialité</h2>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-white">Autoriser les appels vidéo</p>
+            <p className="text-xs text-[#8a8a8a] mt-0.5">
+              Si désactivé, personne ne pourra vous appeler en vidéo
+            </p>
+          </div>
+          <button
+            role="switch"
+            aria-checked={allowVideoCall}
+            onClick={handleToggleVideoCall}
+            className={`relative shrink-0 w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00AFF0] ${
+              allowVideoCall ? 'bg-[#00AFF0]' : 'bg-[#2a2a2a]'
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
+                allowVideoCall ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
       </div>
 
       {/* Profil créateur */}

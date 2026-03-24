@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useChatViewModel } from '../ViewModels/useChatViewModel'
-import VideoCallModal from '../components/VideoCallModal'
+import { useCall } from '../context/CallContext'
 
 function Chat() {
   const { userId } = useParams<{ userId: string }>()
@@ -16,18 +16,13 @@ function Chat() {
     sendText,
     sendFile,
     fileProgress,
-    videoRoomUrl,
-    incomingCall,
-    callError,
-    startVideoCall,
-    closeVideoCall,
-    acceptIncomingCall,
-    rejectIncomingCall,
     bottomRef,
     currentUserId,
     otherUsername,
     otherAvatar,
   } = useChatViewModel(userId ?? '')
+
+  const { startCall } = useCall()
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -59,7 +54,7 @@ function Chat() {
           {otherUsername ? `@${otherUsername}` : 'Conversation'}
         </span>
         <button
-          onClick={startVideoCall}
+          onClick={() => startCall(userId ?? '', otherUsername, otherAvatar)}
           title="Démarrer un appel vidéo"
           className="text-[#8a8a8a] hover:text-[#00AFF0] transition-colors"
         >
@@ -68,10 +63,6 @@ function Chat() {
           </svg>
         </button>
       </div>
-
-      {callError && (
-        <p className="text-xs text-red-400 text-center py-1">{callError}</p>
-      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto py-4 flex flex-col gap-2">
@@ -174,32 +165,6 @@ function Chat() {
         </button>
       </div>
 
-      {/* Incoming call banner */}
-      {incomingCall && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-[#111] border border-[#2a2a2a] shadow-xl rounded-2xl px-6 py-4 flex items-center gap-4 z-50">
-          <svg className="w-6 h-6 text-[#00AFF0] shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
-          </svg>
-          <p className="text-sm font-medium text-white">Appel vidéo entrant</p>
-          <button
-            onClick={acceptIncomingCall}
-            className="bg-green-500 hover:bg-green-600 text-white px-4 py-1.5 rounded-xl text-sm font-semibold"
-          >
-            Accepter
-          </button>
-          <button
-            onClick={rejectIncomingCall}
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded-xl text-sm font-semibold"
-          >
-            Refuser
-          </button>
-        </div>
-      )}
-
-      {/* Video call modal */}
-      {videoRoomUrl && (
-        <VideoCallModal roomUrl={videoRoomUrl} onClose={closeVideoCall} />
-      )}
     </div>
   )
 }

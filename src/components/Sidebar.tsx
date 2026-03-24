@@ -192,7 +192,7 @@ function Sidebar() {
         {isAuthenticated && user ? (
           <div className="space-y-2">
             <NavLink
-              to="/profile"
+              to={user.creatorId ? `/creators/${user.creatorId}` : "/profile/edit"}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 transition-colors"
             >
               {user.avatar ? (
