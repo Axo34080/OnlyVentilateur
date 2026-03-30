@@ -41,20 +41,6 @@ export function onNewMessage(handler: (msg: Message) => void): () => void {
   }
 }
 
-// --- WebRTC signaling ---
-
-export function sendOffer(targetUserId: string, data: unknown): void {
-  socket?.emit('webrtc_offer', { targetUserId, data })
-}
-
-export function sendAnswer(targetUserId: string, data: unknown): void {
-  socket?.emit('webrtc_answer', { targetUserId, data })
-}
-
-export function sendIceCandidate(targetUserId: string, data: unknown): void {
-  socket?.emit('webrtc_ice_candidate', { targetUserId, data })
-}
-
 export function requestCall(targetUserId: string, roomUrl: string): void {
   socket?.emit('call_request', { targetUserId, roomUrl })
 }

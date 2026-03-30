@@ -7,14 +7,7 @@ import {
   sendMessage as socketSendMessage,
   onNewMessage,
 } from '../services/socketService'
-import {
-  initiateFileTransfer,
-  handleIncomingOffer,
-  handleAnswer,
-  handleIceCandidate,
-  setFileReceiveHandler,
-  closePeerConnection,
-} from '../services/webrtcService'
+import { uploadFile } from '../services/uploadService'
 import type { Message } from '../types/Message'
 
 export function useChatViewModel(otherUserId: string) {
@@ -46,7 +39,7 @@ export function useChatViewModel(otherUserId: string) {
   // Connect socket
   useEffect(() => {
     if (!token) return
-    const socket = connectSocket(token)
+    connectSocket(token)
 
     const unsubMsg = onNewMessage((msg) => {
       if (
@@ -60,44 +53,10 @@ export function useChatViewModel(otherUserId: string) {
       }
     })
 
-    // WebRTC signaling listeners
-    socket.on('webrtc_offer', async ({ fromUserId, data }: { fromUserId: string; data: RTCSessionDescriptionInit }) => {
-      if (fromUserId === otherUserId) await handleIncomingOffer(fromUserId, data)
-    })
-
-    socket.on('webrtc_answer', async ({ data }: { data: RTCSessionDescriptionInit }) => {
-      await handleAnswer(data)
-    })
-
-    socket.on('webrtc_ice_candidate', async ({ data }: { data: RTCIceCandidateInit }) => {
-      await handleIceCandidate(data)
-    })
-
     return () => {
       unsubMsg()
-      socket.off('webrtc_offer')
-      socket.off('webrtc_answer')
-      socket.off('webrtc_ice_candidate')
     }
   }, [token, otherUserId, user?.id])
-
-  // File receive handler
-  useEffect(() => {
-    setFileReceiveHandler((fileName, blob) => {
-      const url = URL.createObjectURL(blob)
-      // Show as a fake message in UI
-      const fakeMsg: Message = {
-        id: crypto.randomUUID(),
-        senderId: otherUserId,
-        receiverId: user?.id ?? '',
-        content: url,
-        type: 'file',
-        fileName,
-        createdAt: new Date().toISOString(),
-      }
-      setMessages((prev) => [...prev, fakeMsg])
-    })
-  }, [otherUserId, user?.id])
 
   // Auto-scroll
   useEffect(() => {
@@ -112,15 +71,17 @@ export function useChatViewModel(otherUserId: string) {
 
   const sendFile = useCallback(
     async (file: File) => {
-      setFileProgress(0)
+      if (!token) return
+      setFileProgress(10)
       try {
-        await initiateFileTransfer(otherUserId, file, setFileProgress)
+        const url = await uploadFile(file, token)
+        setFileProgress(100)
+        socketSendMessage(otherUserId, url, 'file', file.name)
       } finally {
         setFileProgress(null)
-        closePeerConnection()
       }
     },
-    [otherUserId],
+    [otherUserId, token],
   )
 
   return {

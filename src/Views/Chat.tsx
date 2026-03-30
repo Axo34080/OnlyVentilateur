@@ -92,17 +92,33 @@ function Chat() {
                 }`}
               >
                 {msg.type === 'file' && msg.content ? (
-                  <a
-                    href={msg.content}
-                    download={msg.fileName ?? 'fichier'}
-                    className={`flex items-center gap-2 underline ${isMine ? 'text-white/80' : 'text-[#00AFF0]'}`}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
-                    </svg>
-                    <span>{msg.fileName ?? 'Télécharger'}</span>
-                  </a>
+                  /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(msg.fileName ?? '') ? (
+                    <img
+                      src={msg.content}
+                      alt={msg.fileName ?? ''}
+                      className="max-w-[220px] rounded-lg cursor-pointer"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  ) : /\.(mp4|webm|ogg|mov)$/i.test(msg.fileName ?? '') ? (
+                    <video
+                      src={msg.content}
+                      controls
+                      className="max-w-[220px] rounded-lg"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  ) : (
+                    <a
+                      href={msg.content}
+                      download={msg.fileName ?? 'fichier'}
+                      className={`flex items-center gap-2 underline ${isMine ? 'text-white/80' : 'text-[#00AFF0]'}`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
+                      </svg>
+                      <span>{msg.fileName ?? 'Télécharger'}</span>
+                    </a>
+                  )
                 ) : (
                   <span>{msg.content}</span>
                 )}
