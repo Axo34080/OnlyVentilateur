@@ -21,7 +21,7 @@ Fonctionnalites principales :
 - boutique goodies + panier
 - checkout Stripe en mode demo
 - notifications
-- chat prive, transfert de fichiers P2P, appel video Daily.co
+- chat prive, transfert de fichiers, appel video Jitsi Meet
 - toggle confidentialite : autoriser / bloquer les appels video entrants
 
 ---
@@ -62,7 +62,7 @@ Fonctionnalites principales :
 | Tailwind CSS | 4.2 | Styling |
 | ESLint | 9 | Lint |
 | socket.io-client | 4.x | Chat temps reel |
-| @daily-co/daily-js | 0.87 | Appel video |
+| Jitsi Meet (embed iframe) | — | Appel video |
 
 ### Backend
 
@@ -108,7 +108,7 @@ src/
 |-- ViewModels/     # logique metier sous forme de hooks
 |-- pages/          # routes simples
 |-- components/     # composants UI reutilisables
-|-- context/        # Auth, Cart, Toast, Call
+|-- context/        # Auth, Cart, Toast, Chat, Call
 |-- services/       # appels API / socket / webRTC
 |-- types/          # interfaces TypeScript
 `-- data/           # anciens mocks conserves en reference
@@ -270,6 +270,14 @@ Responsabilites :
 - persistance `localStorage`
 - gere quantites, suppression, total, variantes
 
+### ChatContext
+
+Responsabilites :
+
+- centralise le compteur de messages non lus (`unreadMessages`)
+- ecoute le socket `new_message` une seule fois (evite la duplication)
+- expose `resetUnread()` accessible depuis la Sidebar et la vue Chat
+
 ### ToastContext
 
 Responsabilites :
@@ -321,7 +329,7 @@ Fonctionnalites :
 - historique de conversation
 - signalement WebRTC
 - transfert de fichiers P2P
-- appel video Daily.co
+- appel video Jitsi Meet
 
 ---
 
@@ -404,7 +412,7 @@ Fonctionnalites :
 | GET | `/api/messages/conversations` | JWT | Liste conversations |
 | GET | `/api/messages/:userId` | JWT | Historique |
 | PATCH | `/api/messages/:userId/read` | JWT | Marque lu |
-| POST | `/api/video/room` | JWT | Creation room Daily.co |
+| POST | `/api/video/room` | JWT | Creation room Jitsi Meet |
 | POST | `/api/upload` | JWT | Upload image |
 
 ---
@@ -542,7 +550,7 @@ Cette section garde une trace de ce qui a ete fait, meme si certaines etapes int
 
 ### Phase 9 - Appels video et confidentialite
 
-- [x] fix "Duplicate DailyIframe instances" : suppression de `<StrictMode>`
+- [x] integration appel video Jitsi Meet (iframe embed)
 - [x] `CallContext` : etat global appels video (fonctionne sur toutes les routes)
 - [x] `IncomingCallBanner` : notification entrant avec nom de l'appelant
 - [x] `CallerWaitingOverlay` : ecran attente pour l'appelant avec timer
