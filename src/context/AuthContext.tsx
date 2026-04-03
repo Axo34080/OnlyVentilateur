@@ -1,3 +1,12 @@
+/**
+ * PRÉSENTATION — AuthContext
+ *
+ * Centralise l'état d'authentification (user + token JWT) accessible partout
+ * dans l'app via le hook useAuth(). Évite de passer user/token en props
+ * à travers tous les composants (prop drilling).
+ *
+ * Pattern : createContext → Provider → hook custom useAuth()
+ */
 import { createContext, useCallback, useContext, useMemo, useState } from "react"
 import type { ReactNode } from "react"
 import * as authService from "../services/authService"
@@ -68,6 +77,8 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     })
   }, [persist, token])
 
+  // useMemo : l'objet de valeur n'est recréé que si l'un des éléments change
+  // → évite de re-rendre tous les consommateurs du contexte à chaque render du Provider
   const contextValue = useMemo(
     () => ({ user, token, login, signup, logout, updateUser, isAuthenticated: !!token }),
     [user, token, login, signup, logout, updateUser]

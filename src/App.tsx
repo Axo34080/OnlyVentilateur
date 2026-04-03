@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import { ToastProvider } from './context/ToastContext'
 import { CallProvider } from './context/CallContext'
+import { ChatProvider } from './context/ChatContext'
 import Sidebar from './components/Sidebar'
 import ToastContainer from './components/ToastContainer'
 import GlobalCallUI from './components/GlobalCallUI'
@@ -31,6 +32,7 @@ function App() {
     <AuthProvider>
       <CartProvider>
         <ToastProvider>
+        <ChatProvider>
         <CallProvider>
         <BrowserRouter>
           <div className="min-h-screen">
@@ -75,6 +77,7 @@ function App() {
           </div>
         </BrowserRouter>
         </CallProvider>
+        </ChatProvider>
         </ToastProvider>
       </CartProvider>
     </AuthProvider>

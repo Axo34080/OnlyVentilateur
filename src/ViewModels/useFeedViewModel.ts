@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useAuth } from "../context/AuthContext"
 import { getLikedPostIds } from "../services/creatorsService"
 import { getPosts } from "../services/postService"
@@ -6,6 +6,16 @@ import { getUserSubscriptions } from "../services/subscriptionService"
 import type { Post } from "../types/Post"
 import type { Creator } from "../types/Creator"
 
+/**
+ * PRÉSENTATION — useFeedViewModel (pattern MVVM)
+ *
+ * Ce custom hook contient TOUTE la logique du fil d'actualité :
+ * chargement des posts, filtres, infinite scroll, likes.
+ * La vue Feed.tsx ne contient que du JSX — zéro logique métier.
+ *
+ * Concepts illustrés : useState, useEffect, useCallback, useMemo,
+ * Intersection Observer, mises à jour optimistes avec rollback.
+ */
 const POSTS_PER_BATCH = 9
 
 type FeedFilter = 'nouveautes' | 'abonnements'
@@ -64,14 +74,18 @@ export function useFeedViewModel(): FeedViewModel {
       .finally(() => setIsLoading(false))
   }, [token])
 
-  const setFilter = (newFilter: FeedFilter) => {
+  const setFilter = useCallback((newFilter: FeedFilter) => {
     setFilterState(newFilter)
     setDisplayedCount(POSTS_PER_BATCH)
-  }
+  }, [])
 
-  const filteredPosts = filter === 'abonnements'
-    ? posts.filter((p) => subscribedCreatorIds.has(p.creatorId))
-    : posts
+  // useMemo : recalcule uniquement si posts ou filter changent (pas à chaque render)
+  const filteredPosts = useMemo(
+    () => filter === 'abonnements'
+      ? posts.filter((p) => subscribedCreatorIds.has(p.creatorId))
+      : posts,
+    [posts, filter, subscribedCreatorIds]
+  )
 
   const hasMore = displayedCount < filteredPosts.length
   const visiblePosts = filteredPosts.slice(0, displayedCount)
@@ -112,11 +126,21 @@ export function useFeedViewModel(): FeedViewModel {
     })
   }
 
+  /**
+   * PRÉSENTATION — Mise à jour optimiste (Optimistic UI)
+   *
+   * 1. On met à jour l'UI immédiatement (sans attendre le serveur) → réactivité
+   * 2. On envoie la requête en arrière-plan
+   * 3. Si la requête échoue → on revient à l'état précédent (rollback)
+   *
+   * L'utilisateur ne ressent aucune latence, mais l'état reste cohérent.
+   */
   const handleLike = (postId: string) => {
     if (!token) return
 
     const wasLiked = likedPostIds.has(postId)
 
+    // Étape 1 : mise à jour immédiate de l'UI
     setPosts((prev) =>
       prev.map((p) =>
         p.id === postId ? { ...p, likes: wasLiked ? Math.max(0, p.likes - 1) : p.likes + 1 } : p
@@ -129,6 +153,7 @@ export function useFeedViewModel(): FeedViewModel {
       return next
     })
 
+    // Étape 2 : requête API en arrière-plan
     fetch(`/api/posts/${postId}/like`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
@@ -138,7 +163,7 @@ export function useFeedViewModel(): FeedViewModel {
         return res.json()
       })
       .then((result: { likes: number; isLiked: boolean }) => applyLikeResult(postId, result))
-      .catch(() => revertLike(postId, wasLiked))
+      .catch(() => revertLike(postId, wasLiked)) // Étape 3 : rollback si erreur
   }
 
   const isPostLiked = (postId: string) => likedPostIds.has(postId)

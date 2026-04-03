@@ -7,6 +7,15 @@ function Feed() {
   const { visiblePosts, getCreator, handleLike, isPostLiked, isCreatorSubscribed, isLoading, isFetchingMore, hasMore, loadMore, error, filter, setFilter } = useFeedViewModel()
   const sentinelRef = useRef<HTMLDivElement>(null)
 
+  /**
+   * PRÉSENTATION — Infinite scroll avec Intersection Observer
+   *
+   * On place un élément invisible (sentinelRef) en bas de la liste.
+   * L'IntersectionObserver déclenche loadMore() dès que cet élément
+   * entre dans le viewport (avec 200px d'anticipation).
+   * → Pas d'événement scroll, pas de calcul de position → performant.
+   * Le cleanup (observer.disconnect) évite les fuites mémoire.
+   */
   useEffect(() => {
     const sentinel = sentinelRef.current
     if (!sentinel) return

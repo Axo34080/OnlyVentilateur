@@ -2,18 +2,18 @@ import { useState, useEffect } from "react"
 import { Link, NavLink, useLocation } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { useCart } from "../context/CartContext"
+import { useChat } from "../context/ChatContext"
 import { getUnreadCount } from "../services/notificationsService"
-import { getUnreadMessagesCount } from "../services/messagesService"
-import { connectSocket } from "../services/socketService"
 
 const OF_TEAL = "#00AFF0"
 
 function Sidebar() {
   const { user, token, isAuthenticated, logout } = useAuth()
   const { totalItems } = useCart()
+  // unreadMessages vit dans ChatContext — partagé avec la vue Chat
+  const { unreadMessages, resetUnread } = useChat()
   const location = useLocation()
   const [unreadCount, setUnreadCount] = useState(0)
-  const [unreadMessages, setUnreadMessages] = useState(0)
   const [mobileOpen, setMobileOpen] = useState(false)
 
   useEffect(() => {
@@ -26,25 +26,8 @@ function Sidebar() {
   }, [location.pathname])
 
   useEffect(() => {
-    if (!token) { setUnreadMessages(0); return }
-    getUnreadMessagesCount(token).then(setUnreadMessages).catch(() => {})
-  }, [token])
-
-  useEffect(() => {
-    if (location.pathname.startsWith('/messages')) setUnreadMessages(0)
-  }, [location.pathname])
-
-  useEffect(() => {
-    if (!token) return
-    const socket = connectSocket(token)
-    const handleNewMessage = () => {
-      if (!location.pathname.startsWith('/messages')) {
-        setUnreadMessages((prev) => prev + 1)
-      }
-    }
-    socket.on('new_message', handleNewMessage)
-    return () => { socket.off('new_message', handleNewMessage) }
-  }, [token, location.pathname])
+    if (location.pathname.startsWith('/messages')) resetUnread()
+  }, [location.pathname, resetUnread])
 
   // Fermer la sidebar mobile lors d'un changement de route
   useEffect(() => {

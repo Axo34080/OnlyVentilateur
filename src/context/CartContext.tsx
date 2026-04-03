@@ -44,12 +44,16 @@ function makeCartKey(id: string, variant?: string): string {
 }
 
 export function CartProvider({ children }: Readonly<{ children: ReactNode }>) {
+  // Initialisation paresseuse : loadCart est appelé une seule fois au montage
   const [items, setItems] = useState<CartItem[]>(loadCart)
 
+  // PRÉSENTATION — Synchronisation automatique avec localStorage à chaque changement du panier
   useEffect(() => {
     localStorage.setItem(CART_KEY, JSON.stringify(items))
   }, [items])
 
+  // PRÉSENTATION — Immutabilité : on ne modifie jamais l'état directement,
+  // on crée toujours un nouveau tableau (spread operator)
   const addItem = useCallback((goodie: GoodieItem) => {
     const key = makeCartKey(goodie.id, goodie.variant)
     setItems((prev) => {
