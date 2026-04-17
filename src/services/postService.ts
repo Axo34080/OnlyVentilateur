@@ -1,8 +1,32 @@
 import type { Post } from "../types/Post"
 import type { Creator } from "../types/Creator"
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapCreator(c: any): Creator {
+interface ApiCreator {
+  id: string
+  username: string
+  displayName: string
+  avatar?: string
+  coverImage?: string
+  bio?: string
+  subscriptionPrice: string | number
+  isPremium: boolean
+}
+
+interface ApiPost {
+  id: string
+  creator?: ApiCreator
+  creatorId?: string
+  title: string
+  description: string
+  image: string
+  isLocked: boolean
+  price?: string | number | null
+  likes: number
+  tags?: string[]
+  createdAt: string
+}
+
+function mapCreator(c: ApiCreator): Creator {
   return {
     id: c.id,
     username: c.username,
@@ -10,7 +34,7 @@ function mapCreator(c: any): Creator {
     avatar: c.avatar ?? "",
     coverImage: c.coverImage ?? "",
     bio: c.bio ?? "",
-    subscriptionPrice: Number.parseFloat(c.subscriptionPrice),
+    subscriptionPrice: Number.parseFloat(String(c.subscriptionPrice)),
     isPremium: c.isPremium,
   }
 }
@@ -20,8 +44,7 @@ export async function getPosts(token?: string | null): Promise<{ posts: Post[]; 
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   })
   if (!res.ok) throw new Error("Erreur lors du chargement des posts")
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const data: any[] = await res.json()
+  const data: ApiPost[] = await res.json()
   const creators: Creator[] = []
   const seenIds = new Set<string>()
   const posts = data.map((p) => {
@@ -45,8 +68,7 @@ interface CreatePostDto {
 
 type UpdatePostDto = Partial<CreatePostDto>
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapPost(p: any): Post {
+function mapPost(p: ApiPost): Post {
   return {
     id: p.id,
     creatorId: p.creator?.id ?? p.creatorId ?? "",
@@ -54,7 +76,7 @@ function mapPost(p: any): Post {
     description: p.description,
     image: p.image,
     isLocked: p.isLocked,
-    price: p.price !== null && p.price !== undefined ? Number.parseFloat(p.price) : undefined,
+    price: p.price !== null && p.price !== undefined ? Number(p.price) : undefined,
     likes: p.likes,
     tags: p.tags ?? [],
     createdAt: p.createdAt,

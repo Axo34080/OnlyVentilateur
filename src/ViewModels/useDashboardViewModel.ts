@@ -65,10 +65,11 @@ export function useDashboardViewModel(): DashboardViewModel {
       setCreator(null)
       setPosts([])
       setIsLoading(false)
-      setError("Espace reserve aux createurs")
+      setError("Espace réservé aux créateurs")
       return
     }
 
+    let cancelled = false
     const load = async () => {
       setIsLoading(true)
       setError(null)
@@ -77,16 +78,19 @@ export function useDashboardViewModel(): DashboardViewModel {
           getMyPosts(token),
           getCreatorById(user.creatorId!),
         ])
-        setPosts(myPosts)
-        setCreator(creatorData)
+        if (!cancelled) {
+          setPosts(myPosts)
+          setCreator(creatorData)
+        }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Erreur de chargement")
+        if (!cancelled) setError(err instanceof Error ? err.message : "Erreur de chargement")
       } finally {
-        setIsLoading(false)
+        if (!cancelled) setIsLoading(false)
       }
     }
 
     load()
+    return () => { cancelled = true }
   }, [token, user?.creatorId])
 
   useEffect(() => {

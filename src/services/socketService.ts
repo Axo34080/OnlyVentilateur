@@ -1,14 +1,14 @@
-import { io, Socket } from 'socket.io-client'
-import type { Message } from '../types/Message'
+import { io, Socket } from "socket.io-client"
+import type { Message } from "../types/Message"
 
 let socket: Socket | null = null
 
 export function connectSocket(token: string): Socket {
   if (socket?.connected) return socket
 
-  socket = io('/chat', {
+  socket = io("/chat", {
     auth: { token },
-    transports: ['polling'],
+    transports: ["websocket", "polling"],
   })
 
   return socket

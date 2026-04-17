@@ -83,12 +83,17 @@ export function CartProvider({ children }: Readonly<{ children: ReactNode }>) {
 
   const clearCart = useCallback(() => setItems([]), [])
 
-  const totalItems = items.reduce((sum, i) => sum + i.quantity, 0)
-  const totalPrice = items.reduce((sum, i) => sum + i.price * i.quantity, 0)
-
   const contextValue = useMemo(
-    () => ({ items, addItem, removeItem, updateQuantity, clearCart, totalItems, totalPrice }),
-    [items, addItem, removeItem, updateQuantity, clearCart, totalItems, totalPrice]
+    () => ({
+      items,
+      addItem,
+      removeItem,
+      updateQuantity,
+      clearCart,
+      totalItems: items.reduce((sum, i) => sum + i.quantity, 0),
+      totalPrice: items.reduce((sum, i) => sum + i.price * i.quantity, 0),
+    }),
+    [items, addItem, removeItem, updateQuantity, clearCart]
   )
 
   return (
