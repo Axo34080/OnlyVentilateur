@@ -72,14 +72,17 @@ export function useUserProfileViewModel(): UserProfileViewModel {
     if (!token) return
     getSubscribedCreators(token)
       .then(setSubscriptions)
-      .catch(() => {})
-  }, [token])
+      .catch(() => showToast("Impossible de charger tes abonnements.", "error"))
+  }, [token, showToast])
 
   // Charger le profil créateur si l'utilisateur en est un
   useEffect(() => {
     if (!token || !user?.creatorId) return
     fetch("/api/creators/me", { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error("Impossible de charger le profil crÃ©ateur")
+        return r.json()
+      })
       .then((data) => {
         setCreatorData(data)
         setCreatorForm({
@@ -88,8 +91,8 @@ export function useUserProfileViewModel(): UserProfileViewModel {
           subscriptionPrice: String(data.subscriptionPrice ?? ""),
         })
       })
-      .catch(() => {})
-  }, [token, user?.creatorId])
+      .catch(() => showToast("Impossible de charger le profil crÃ©ateur.", "error"))
+  }, [token, user?.creatorId, showToast])
 
   const handleUnsubscribe = async (creatorId: string) => {
     if (!token) return
@@ -161,11 +164,16 @@ export function useUserProfileViewModel(): UserProfileViewModel {
   const handleAvatarChange = (file: File) => {
     const reader = new FileReader()
     reader.onload = (e) => {
-      const base64 = e.target?.result as string
+      const base64 = e.target?.result
+      if (typeof base64 !== "string") {
+        showToast("Impossible de lire l'image.", "error")
+        return
+      }
       setForm((prev) => ({ ...prev, avatar: base64 }))
       setIsEditing(true)
       setError(null)
     }
+    reader.onerror = () => showToast("Impossible de lire l'image.", "error")
     reader.readAsDataURL(file)
   }
 
@@ -186,6 +194,13 @@ export function useUserProfileViewModel(): UserProfileViewModel {
   }
 
   const handleSaveCreator = async () => {
+    const subscriptionPrice = creatorForm.subscriptionPrice
+      ? Number.parseFloat(creatorForm.subscriptionPrice)
+      : undefined
+    if (subscriptionPrice !== undefined && Number.isNaN(subscriptionPrice)) {
+      setCreatorError("Tarif Souffle invalide")
+      return
+    }
     setIsSavingCreator(true)
     setCreatorError(null)
     try {
@@ -198,9 +213,7 @@ export function useUserProfileViewModel(): UserProfileViewModel {
         body: JSON.stringify({
           displayName: creatorForm.displayName || undefined,
           coverImage: creatorForm.coverImage || undefined,
-          subscriptionPrice: creatorForm.subscriptionPrice
-            ? Number.parseFloat(creatorForm.subscriptionPrice)
-            : undefined,
+          subscriptionPrice,
         }),
       })
       if (!res.ok) {
@@ -233,7 +246,7 @@ export function useUserProfileViewModel(): UserProfileViewModel {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ allowVideoCall: newValue }),
       })
-      if (!res.ok) throw new Error()
+      if (!res.ok) throw new Error("Erreur lors de la mise a jour des appels video")
       updateUser({ allowVideoCall: newValue })
       showToast(newValue ? "Appels vidéo activés" : "Appels vidéo désactivés", "success")
     } catch {

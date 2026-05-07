@@ -47,7 +47,7 @@ function CreatorSection({
               {"Voir ma page →"}
             </Link>
             {!isEditingCreator && (
-              <button onClick={handleEditCreator} className="text-sm text-[#00AFF0] hover:underline font-medium">Modifier</button>
+              <button type="button" onClick={handleEditCreator} className="text-sm text-[#00AFF0] hover:underline font-medium">Modifier</button>
             )}
           </div>
         </div>
@@ -84,11 +84,11 @@ function CreatorSection({
 
         {isEditingCreator && (
           <div className="flex gap-3 pt-1">
-            <button onClick={handleSaveCreator} disabled={isSavingCreator}
+            <button type="button" onClick={handleSaveCreator} disabled={isSavingCreator}
               className="bg-[#00AFF0] hover:bg-[#0099CC] disabled:opacity-50 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors">
               {isSavingCreator ? "Sauvegarde..." : "Sauvegarder"}
             </button>
-            <button onClick={handleCancelCreator} disabled={isSavingCreator}
+            <button type="button" onClick={handleCancelCreator} disabled={isSavingCreator}
               className="bg-[#2a2a2a] hover:bg-[#333] text-[#8a8a8a] hover:text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors">
               Annuler
             </button>
@@ -130,12 +130,10 @@ function UserProfile() {
 
       {/* En-tête profil */}
       <div className="bg-[#111] rounded-2xl border border-[#2a2a2a] p-6 flex items-center gap-6">
-        <div
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
           className="relative shrink-0 cursor-pointer group"
           onClick={() => fileInputRef.current?.click()}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click() }}
           title="Changer la photo de profil"
         >
           {avatarSrc ? (
@@ -151,7 +149,7 @@ function UserProfile() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
             </svg>
           </div>
-        </div>
+        </button>
 
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden"
           onChange={(e) => {
@@ -175,7 +173,7 @@ function UserProfile() {
         <div className="flex items-center justify-between">
           <h2 className="font-bold text-white">Modifier le profil</h2>
           {!isEditing && (
-            <button onClick={handleEdit} className="text-sm text-[#00AFF0] hover:underline font-medium">Modifier</button>
+            <button type="button" onClick={handleEdit} className="text-sm text-[#00AFF0] hover:underline font-medium">Modifier</button>
           )}
         </div>
 
@@ -204,11 +202,11 @@ function UserProfile() {
 
         {isEditing && (
           <div className="flex gap-3 pt-1">
-            <button onClick={handleSave} disabled={isSaving}
+            <button type="button" onClick={handleSave} disabled={isSaving}
               className="bg-[#00AFF0] hover:bg-[#0099CC] disabled:opacity-50 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors">
               {isSaving ? "Sauvegarde..." : "Sauvegarder"}
             </button>
-            <button onClick={handleCancel} disabled={isSaving}
+            <button type="button" onClick={handleCancel} disabled={isSaving}
               className="bg-[#2a2a2a] hover:bg-[#333] text-[#8a8a8a] hover:text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors">
               Annuler
             </button>
@@ -227,6 +225,7 @@ function UserProfile() {
             </p>
           </div>
           <button
+            type="button"
             role="switch"
             aria-checked={allowVideoCall}
             onClick={handleToggleVideoCall}
@@ -273,7 +272,7 @@ function UserProfile() {
                     <div className="text-xs text-[#555] truncate">{creator.username}</div>
                   </div>
                 </Link>
-                <button onClick={() => handleUnsubscribe(creator.id)}
+                <button type="button" onClick={() => handleUnsubscribe(creator.id)}
                   className="text-xs text-[#8a8a8a] hover:text-red-400 transition-colors shrink-0 border border-[#2a2a2a] hover:border-red-800/50 px-3 py-1.5 rounded-lg">
                   Arrêter le souffle
                 </button>

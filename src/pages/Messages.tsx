@@ -10,8 +10,8 @@ function Messages() {
 
       {isLoading && (
         <div className="flex flex-col gap-2">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-16 bg-[#1a1a1a] rounded-2xl animate-pulse" />
+          {[...new Array(4)].map((_, i) => (
+            <div key={`msg-skeleton-${i}`} className="h-16 bg-[#1a1a1a] rounded-2xl animate-pulse" />
           ))}
         </div>
       )}

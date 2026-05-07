@@ -89,26 +89,30 @@ export function useCreatorProfileViewModel(creatorId: string): CreatorProfileVie
     setIsCheckingSubscription(true)
     getUserSubscriptions(token)
       .then((ids) => setIsSubscribed(ids.includes(creatorId)))
-      .catch(() => {})
+      .catch(() => showToast("Impossible de vÃ©rifier l'abonnement.", "error"))
       .finally(() => setIsCheckingSubscription(false))
-  }, [token, creatorId])
+  }, [token, creatorId, showToast])
 
   useEffect(() => {
     if (!token) return
     getLikedPostIds(token)
       .then((ids) => setLikedPostIds(new Set(ids)))
-      .catch(() => {})
-  }, [token])
+      .catch(() => showToast("Impossible de charger tes likes.", "error"))
+  }, [token, showToast])
 
   useEffect(() => {
     if (!token || !user?.creatorId || user.creatorId !== creatorId) return
-    getSubscribedCreators(token).then(setSubscriptions).catch(() => {})
-  }, [token, user?.creatorId, creatorId])
+    getSubscribedCreators(token)
+      .then(setSubscriptions)
+      .catch(() => showToast("Impossible de charger tes abonnements.", "error"))
+  }, [token, user?.creatorId, creatorId, showToast])
 
   useEffect(() => {
     if (!creatorId) return
-    getGoodies(creatorId).then(setGoodies).catch(() => {})
-  }, [creatorId])
+    getGoodies(creatorId)
+      .then(setGoodies)
+      .catch(() => showToast("Impossible de charger les goodies.", "error"))
+  }, [creatorId, showToast])
 
   const handleSubscribe = async () => {
     if (!token) {
@@ -156,6 +160,7 @@ export function useCreatorProfileViewModel(creatorId: string): CreatorProfileVie
       .catch(() => {
         setPosts((prev) => prev.map(revertPostLikes(postId, wasLiked)))
         setLikedPostIds((prev) => toggleInSet(prev, postId, wasLiked))
+        showToast("Impossible de mettre Ã  jour le like.", "error")
       })
   }
 

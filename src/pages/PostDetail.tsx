@@ -18,6 +18,7 @@ function PostDetail() {
   const [isLiked, setIsLiked] = useState(false)
   const [isSubscribed, setIsSubscribed] = useState(false)
   const [comments, setComments] = useState<Comment[]>([])
+  const [commentsError, setCommentsError] = useState<string | null>(null)
   const [newComment, setNewComment] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -48,7 +49,9 @@ function PostDetail() {
 
   useEffect(() => {
     if (!id) return
-    getComments(id).then(setComments).catch(() => {})
+    getComments(id)
+      .then(setComments)
+      .catch(() => setCommentsError("Impossible de charger les commentaires."))
   }, [id])
 
   const handleLike = () => {
@@ -60,7 +63,7 @@ function PostDetail() {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => { if (!res.ok) throw new Error(); return res.json() })
+      .then((res) => { if (!res.ok) { throw new Error("Like failed") } return res.json() })
       .then((result: { likes: number; isLiked: boolean }) => { setLikes(result.likes); setIsLiked(result.isLiked) })
       .catch(() => { setIsLiked(wasLiked); setLikes((prev) => wasLiked ? prev + 1 : Math.max(0, prev - 1)) })
   }
@@ -72,8 +75,9 @@ function PostDetail() {
       const comment = await addComment(id, newComment.trim(), token)
       setComments((prev) => [comment, ...prev])
       setNewComment("")
+      setCommentsError(null)
     } catch {
-      // silently fail
+      setCommentsError("Impossible d'ajouter le commentaire.")
     } finally {
       setIsSubmitting(false)
     }
@@ -203,6 +207,7 @@ function PostDetail() {
         <div className="flex items-start justify-between gap-4">
           <h1 className="text-2xl font-bold text-white">{post.title}</h1>
           <button
+            type="button"
             onClick={handleLike}
             className={`flex items-center gap-1.5 transition-colors shrink-0 ${
               isLiked ? "text-red-500" : "text-[#555] hover:text-red-500"
@@ -252,6 +257,7 @@ function PostDetail() {
             />
             <div className="flex justify-end">
               <button
+                type="button"
                 onClick={handleSubmitComment}
                 disabled={isSubmitting || !newComment.trim()}
                 className="bg-[#00AFF0] hover:bg-[#0099CC] disabled:opacity-50 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
@@ -266,9 +272,14 @@ function PostDetail() {
           </p>
         )}
 
-        {comments.length === 0 ? (
-          <p className="text-sm text-[#8a8a8a]">Soyez le premier à commenter !</p>
-        ) : (
+        {commentsError && (
+          <p className="text-sm text-red-400">{commentsError}</p>
+        )}
+
+        {!commentsError && comments.length === 0 && (
+          <p className="text-sm text-[#8a8a8a]">Soyez le premier a commenter !</p>
+        )}
+        {!commentsError && comments.length > 0 && (
           <div className="flex flex-col gap-4">
             {comments.map((comment) => (
               <div key={comment.id} className="flex items-start gap-3">

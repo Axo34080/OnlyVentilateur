@@ -4,7 +4,7 @@ import { useCart } from "../context/CartContext"
 
 function Shop() {
   const {
-    filter, creators, filteredGoodies, addedId, isLoading, isCheckingOut, checkoutSuccess, checkoutError,
+    filter, creators, filteredGoodies, addedId, isLoading, isCheckingOut, checkoutSuccess, checkoutError, shopError,
     handleFilter, handleAddToCart, handleCheckout,
   } = useShopViewModel()
   const { items, totalItems, totalPrice, removeItem, updateQuantity } = useCart()
@@ -21,9 +21,9 @@ function Shop() {
         <p className="text-[#8a8a8a] text-sm">
           Merci pour ton achat. Tes goodies ventilateur arrivent bientôt (simulation).
         </p>
-        <a href="/shop" className="text-[#00AFF0] hover:underline text-sm">
+        <Link to="/shop" className="text-[#00AFF0] hover:underline text-sm">
           Continuer mes achats
-        </a>
+        </Link>
       </div>
     )
   }
@@ -42,6 +42,7 @@ function Shop() {
           <div className="flex gap-2 flex-wrap">
             {creators.map((c) => (
               <button
+                type="button"
                 key={c}
                 onClick={() => handleFilter(c)}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
@@ -58,11 +59,17 @@ function Shop() {
           {/* Grille produits */}
           {isLoading ? (
             <div className="text-center py-12 text-[#8a8a8a]">Chargement des goodies...</div>
+          ) : shopError ? (
+            <p className="text-red-400 text-sm py-12">{shopError}</p>
           ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {filteredGoodies.map((goodie) => {
               const inCart = items.find((i) => i.id === goodie.id)
               const wasAdded = addedId === goodie.id
+              const cartBtnClassBase = inCart ? "bg-[#00AFF0]/10 text-[#00AFF0] border border-[#00AFF0]/30" : "bg-[#00AFF0] text-white hover:bg-[#0099CC]"
+              const cartBtnClass = wasAdded ? "bg-green-900/30 text-green-400" : cartBtnClassBase
+              const cartBtnLabelBase = inCart ? `Encore (×${inCart.quantity})` : "Ajouter"
+              const cartBtnLabel = wasAdded ? "Ajouté !" : cartBtnLabelBase
 
               return (
                 <div
@@ -94,16 +101,11 @@ function Shop() {
                         </Link>
                       ) : (
                         <button
+                          type="button"
                           onClick={() => handleAddToCart(goodie)}
-                          className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
-                            wasAdded
-                              ? "bg-green-900/30 text-green-400"
-                              : inCart
-                              ? "bg-[#00AFF0]/10 text-[#00AFF0] border border-[#00AFF0]/30"
-                              : "bg-[#00AFF0] text-white hover:bg-[#0099CC]"
-                          }`}
+                          className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${cartBtnClass}`}
                         >
-                          {wasAdded ? "Ajouté !" : inCart ? `Encore (×${inCart.quantity})` : "Ajouter"}
+                          {cartBtnLabel}
                         </button>
                       )}
                     </div>
@@ -148,6 +150,7 @@ function Shop() {
                       </div>
                       <div className="flex items-center gap-1">
                         <button
+                          type="button"
                           onClick={() => updateQuantity(item.cartKey, item.quantity - 1)}
                           className="w-6 h-6 rounded-md bg-[#2a2a2a] hover:bg-[#333] text-white text-xs font-bold flex items-center justify-center"
                         >
@@ -155,12 +158,14 @@ function Shop() {
                         </button>
                         <span className="text-xs w-4 text-center text-white">{item.quantity}</span>
                         <button
+                          type="button"
                           onClick={() => updateQuantity(item.cartKey, item.quantity + 1)}
                           className="w-6 h-6 rounded-md bg-[#2a2a2a] hover:bg-[#333] text-white text-xs font-bold flex items-center justify-center"
                         >
                           +
                         </button>
                         <button
+                          type="button"
                           onClick={() => removeItem(item.cartKey)}
                           className="w-6 h-6 rounded-md text-[#555] hover:text-red-400 text-xs flex items-center justify-center ml-1"
                         >
@@ -182,6 +187,7 @@ function Shop() {
                     </p>
                   )}
                   <button
+                    type="button"
                     onClick={handleCheckout}
                     disabled={isCheckingOut}
                     className="w-full bg-[#00AFF0] hover:bg-[#0099CC] disabled:opacity-50 text-white font-semibold py-2.5 rounded-lg text-sm transition-colors"

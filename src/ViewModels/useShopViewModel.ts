@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext"
 import { useCart } from "../context/CartContext"
 import type { GoodieItem } from "../context/CartContext"
 import { getGoodies, goodieToCartItem } from "../services/goodiesService"
-import { createOrderCheckout } from "../services/checkoutService"
+import { createOrderCheckout, redirectToStripeCheckout } from "../services/checkoutService"
 
 interface ShopViewModel {
   goodies: GoodieItem[]
@@ -16,6 +16,7 @@ interface ShopViewModel {
   isCheckingOut: boolean
   checkoutSuccess: boolean
   checkoutError: string | null
+  shopError: string | null
   handleFilter: (creator: string) => void
   handleAddToCart: (goodie: GoodieItem) => void
   handleCheckout: () => Promise<void>
@@ -31,6 +32,7 @@ export function useShopViewModel(): ShopViewModel {
   const [isCheckingOut, setIsCheckingOut] = useState(false)
   const [checkoutSuccess, setCheckoutSuccess] = useState(false)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
+  const [shopError, setShopError] = useState<string | null>(null)
   const [goodies, setGoodies] = useState<GoodieItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -44,9 +46,10 @@ export function useShopViewModel(): ShopViewModel {
 
   useEffect(() => {
     setIsLoading(true)
+    setShopError(null)
     getGoodies()
       .then((data) => setGoodies(data.map((g) => goodieToCartItem(g))))
-      .catch(() => {})
+      .catch(() => setShopError("Impossible de charger les goodies."))
       .finally(() => setIsLoading(false))
   }, [])
 
@@ -70,9 +73,7 @@ export function useShopViewModel(): ShopViewModel {
     setCheckoutError(null)
     try {
       const url = await createOrderCheckout(items, token)
-      const parsed = new URL(url)
-      if (parsed.origin !== "https://checkout.stripe.com") throw new Error("URL de paiement invalide")
-      globalThis.location.href = `https://checkout.stripe.com${parsed.pathname}${parsed.search}`
+      redirectToStripeCheckout(url)
     } catch {
       setCheckoutError("Erreur lors du paiement. Réessaie.")
       setIsCheckingOut(false)
@@ -89,6 +90,7 @@ export function useShopViewModel(): ShopViewModel {
     isCheckingOut,
     checkoutSuccess,
     checkoutError,
+    shopError,
     handleFilter,
     handleAddToCart,
     handleCheckout,

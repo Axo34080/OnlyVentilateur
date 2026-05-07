@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext"
 import { getNotifications } from "../services/notificationsService"
 import type { Notification } from "../services/notificationsService"
 
-function TypeIcon({ type }: { type: string }) {
+function TypeIcon({ type }: Readonly<{ type: string }>) {
   if (type === "subscribe") return (
     <svg className="w-5 h-5 text-[#00AFF0]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 019.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
@@ -42,12 +42,13 @@ function Notifications() {
   const { token } = useAuth()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!token) return
     getNotifications(token)
       .then(setNotifications)
-      .catch(() => {})
+      .catch(() => setError("Impossible de charger les notifications."))
       .finally(() => setIsLoading(false))
   }, [token])
 
@@ -63,7 +64,9 @@ function Notifications() {
     <div className="max-w-2xl mx-auto flex flex-col gap-4">
       <h1 className="text-2xl font-bold text-white">Notifications</h1>
 
-      {notifications.length === 0 ? (
+      {error ? (
+        <p className="text-sm text-red-400">{error}</p>
+      ) : notifications.length === 0 ? (
         <div className="bg-[#111] rounded-2xl border border-[#2a2a2a] p-12 text-center flex flex-col items-center gap-3">
           <svg className="w-10 h-10 text-[#2a2a2a]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
@@ -76,7 +79,7 @@ function Notifications() {
             <div
               key={notif.id}
               className={`flex items-start gap-4 px-5 py-4 transition-colors ${
-                !notif.isRead ? "bg-[#00AFF0]/5" : ""
+                notif.isRead ? "" : "bg-[#00AFF0]/5"
               }`}
             >
               {notif.actorAvatar ? (

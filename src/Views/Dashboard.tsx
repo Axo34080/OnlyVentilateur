@@ -1,4 +1,4 @@
-import { useRef } from "react"
+﻿import { useRef, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useDashboardViewModel } from "../ViewModels/useDashboardViewModel"
 import type { Goodie } from "../services/goodiesService"
@@ -14,6 +14,7 @@ function Dashboard() {
   } = useDashboardViewModel()
   const goodieImageRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
+  const [pendingDelete, setPendingDelete] = useState<{ type: "post" | "goodie"; id: string } | null>(null)
 
   if (isLoading) {
     return (
@@ -32,6 +33,17 @@ function Dashboard() {
     .reduce((sum, p) => sum + (p.price ?? 0), 0)
 
   const isFormOpen = editingGoodieId !== null || newGoodieOpen
+  const goodieLabelWhenNotSaving = editingGoodieId ? "Mettre Ã  jour" : "CrÃ©er"
+  const goodieSaveLabel = isSavingGoodie ? "Enregistrement..." : goodieLabelWhenNotSaving
+  const confirmDelete = () => {
+    if (!pendingDelete) return
+    if (pendingDelete.type === "post") {
+      void handleDeletePost(pendingDelete.id)
+    } else {
+      void handleDeleteGoodie(pendingDelete.id)
+    }
+    setPendingDelete(null)
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -43,6 +55,7 @@ function Dashboard() {
           )}
         </div>
         <button
+          type="button"
           onClick={() => navigate("/dashboard/new-post")}
           className="bg-[#00AFF0] hover:bg-[#0099CC] text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors"
         >
@@ -52,15 +65,15 @@ function Dashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Rafales publiées" value={posts.length} />
+        <StatCard label="Rafales publiÃ©es" value={posts.length} />
         <StatCard label="Souffleurs" value={creator?.subscriberCount ?? 0} />
-        <StatCard label="Tarif Souffle" value={`${creator?.subscriptionPrice ?? 0} €/mois`} />
+        <StatCard label="Tarif Souffle" value={`${creator?.subscriptionPrice ?? 0} â‚¬/mois`} />
         <StatCard label="Mode Haute Pression" value={posts.filter((p) => p.isLocked).length} />
       </div>
 
       {revenue > 0 && (
         <div className="bg-green-900/20 border border-green-800/50 rounded-xl px-5 py-3 text-sm text-green-400">
-          Pression revenue estimée : <strong>{revenue.toFixed(2)} €</strong>
+          Pression revenue estimÃ©e : <strong>{revenue.toFixed(2)} â‚¬</strong>
         </div>
       )}
 
@@ -68,17 +81,18 @@ function Dashboard() {
       <div className="bg-[#111] rounded-2xl border border-[#2a2a2a]">
         <div className="px-6 py-4 border-b border-[#1f1f1f] flex items-center justify-between">
           <h2 className="font-bold text-white">Mes courants d'air</h2>
-          <span className="text-xs text-[#555]">{posts.length} rafale{posts.length !== 1 ? "s" : ""}</span>
+          <span className="text-xs text-[#555]">{posts.length} rafale{posts.length === 1 ? "" : "s"}</span>
         </div>
 
         {posts.length === 0 ? (
           <div className="px-6 py-12 text-center">
-            <p className="text-[#8a8a8a] text-sm mb-4">Aucune rafale publiée pour le moment.</p>
+            <p className="text-[#8a8a8a] text-sm mb-4">Aucune rafale publiÃ©e pour le moment.</p>
             <button
+              type="button"
               onClick={() => navigate("/dashboard/new-post")}
               className="bg-[#00AFF0] hover:bg-[#0099CC] text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors"
             >
-              Lancer ma première rafale
+              Lancer ma premiÃ¨re rafale
             </button>
           </div>
         ) : (
@@ -95,27 +109,27 @@ function Dashboard() {
                     <span className="font-semibold text-white text-sm truncate">{post.title}</span>
                     {post.isLocked && (
                       <span className="shrink-0 text-xs bg-[#00AFF0]/10 text-[#00AFF0] px-2 py-0.5 rounded-full">
-                        Haute Pression {post.price ? `${post.price} €` : ""}
+                        Haute Pression {post.price ? `${post.price} â‚¬` : ""}
                       </span>
                     )}
                   </div>
                   <p className="text-xs text-[#555] truncate mt-0.5">{post.description}</p>
                   <div className="flex items-center gap-3 mt-1 text-xs text-[#555]">
-                    <span>{post.likes} rafale{post.likes !== 1 ? "s" : ""}</span>
+                    <span>{post.likes} rafale{post.likes === 1 ? "" : "s"}</span>
                     <span>{new Date(post.createdAt).toLocaleDateString("fr-FR")}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button
+                    type="button"
                     onClick={() => navigate(`/dashboard/edit-post/${post.id}`)}
                     className="text-xs text-[#8a8a8a] hover:text-[#00AFF0] border border-[#2a2a2a] hover:border-[#00AFF0]/30 px-3 py-1.5 rounded-lg transition-colors"
                   >
-                    Éditer
+                    Ã‰diter
                   </button>
                   <button
-                    onClick={() => {
-                      if (confirm("Supprimer ce post ?")) handleDeletePost(post.id)
-                    }}
+                    type="button"
+                    onClick={() => setPendingDelete({ type: "post", id: post.id })}
                     className="text-xs text-[#8a8a8a] hover:text-red-500 border border-[#2a2a2a] hover:border-red-800/50 px-3 py-1.5 rounded-lg transition-colors"
                   >
                     Supprimer
@@ -132,6 +146,7 @@ function Dashboard() {
         <div className="px-6 py-4 border-b border-[#1f1f1f] flex items-center justify-between">
           <h2 className="font-bold text-white">Ma boutique</h2>
           <button
+            type="button"
             onClick={handleNewGoodie}
             className="text-xs text-[#00AFF0] hover:text-white border border-[#00AFF0]/30 hover:border-[#00AFF0] px-3 py-1.5 rounded-lg transition-colors"
           >
@@ -139,7 +154,7 @@ function Dashboard() {
           </button>
         </div>
 
-        {/* Formulaire ajout / édition */}
+        {/* Formulaire ajout / Ã©dition */}
         {isFormOpen && (
           <div className="px-6 py-5 border-b border-[#1f1f1f] bg-[#1a1a1a]">
             <h3 className="font-semibold text-white text-sm mb-4">
@@ -158,7 +173,7 @@ function Dashboard() {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label htmlFor="goodie-price" className="text-xs font-medium text-[#8a8a8a]">Prix (€) *</label>
+                <label htmlFor="goodie-price" className="text-xs font-medium text-[#8a8a8a]">Prix (â‚¬) *</label>
                 <input
                   id="goodie-price"
                   type="number"
@@ -194,7 +209,7 @@ function Dashboard() {
                       disabled={isUploadingGoodieImage}
                       className="border border-[#2a2a2a] hover:border-[#00AFF0]/30 rounded-lg px-3 py-2 text-sm text-[#8a8a8a] hover:text-[#00AFF0] transition-colors text-left disabled:opacity-50 bg-[#111]"
                     >
-                      {isUploadingGoodieImage ? "Téléversement..." : "Choisir un fichier"}
+                      {isUploadingGoodieImage ? "TÃ©lÃ©versement..." : "Choisir un fichier"}
                     </button>
                     <input
                       id="goodie-image-url"
@@ -211,12 +226,12 @@ function Dashboard() {
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleGoodieImageFile(f); e.target.value = "" }}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) { handleGoodieImageFile(f) } e.target.value = "" }}
                 />
               </div>
               <div className="flex flex-col gap-1 md:col-span-2">
                 <label htmlFor="goodie-variants" className="text-xs font-medium text-[#8a8a8a]">
-                  Variantes <span className="font-normal text-[#555]">(facultatif — séparées par des virgules)</span>
+                  Variantes <span className="font-normal text-[#555]">(facultatif â€” sÃ©parÃ©es par des virgules)</span>
                 </label>
                 <input
                   id="goodie-variants"
@@ -240,13 +255,15 @@ function Dashboard() {
             </div>
             <div className="flex items-center gap-3 mt-4">
               <button
+                type="button"
                 onClick={handleSaveGoodie}
                 disabled={isSavingGoodie || isUploadingGoodieImage || !goodieForm.name || !goodieForm.price || !goodieForm.image}
                 className="bg-[#00AFF0] hover:bg-[#0099CC] disabled:opacity-50 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors"
               >
-                {isSavingGoodie ? "Enregistrement..." : editingGoodieId ? "Mettre à jour" : "Créer"}
+                {goodieSaveLabel}
               </button>
               <button
+                type="button"
                 onClick={handleCancelGoodie}
                 className="text-sm text-[#8a8a8a] hover:text-white transition-colors"
               >
@@ -257,13 +274,15 @@ function Dashboard() {
         )}
 
         {/* Liste des goodies */}
-        {goodiesLoading ? (
+        {goodiesLoading && (
           <div className="px-6 py-8 text-center text-[#8a8a8a] text-sm">Chargement...</div>
-        ) : goodies.length === 0 ? (
+        )}
+        {!goodiesLoading && goodies.length === 0 && (
           <div className="px-6 py-12 text-center">
             <p className="text-[#8a8a8a] text-sm">Tu n'as pas encore de goodies dans ta boutique.</p>
           </div>
-        ) : (
+        )}
+        {!goodiesLoading && goodies.length > 0 && (
           <div className="divide-y divide-[#1f1f1f]">
             {goodies.map((goodie: Goodie) => (
               <div key={goodie.id} className="px-6 py-4 flex items-center gap-4">
@@ -282,19 +301,19 @@ function Dashboard() {
                   {goodie.description && (
                     <p className="text-xs text-[#555] truncate mt-0.5">{goodie.description}</p>
                   )}
-                  <p className="text-sm font-bold text-white mt-0.5">{Number(goodie.price).toFixed(2)} €</p>
+                  <p className="text-sm font-bold text-white mt-0.5">{Number(goodie.price).toFixed(2)} â‚¬</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button
+                    type="button"
                     onClick={() => handleEditGoodie(goodie)}
                     className="text-xs text-[#8a8a8a] hover:text-[#00AFF0] border border-[#2a2a2a] hover:border-[#00AFF0]/30 px-3 py-1.5 rounded-lg transition-colors"
                   >
-                    Éditer
+                    Ã‰diter
                   </button>
                   <button
-                    onClick={() => {
-                      if (confirm("Supprimer ce goodie ?")) handleDeleteGoodie(goodie.id)
-                    }}
+                    type="button"
+                    onClick={() => setPendingDelete({ type: "goodie", id: goodie.id })}
                     className="text-xs text-[#8a8a8a] hover:text-red-500 border border-[#2a2a2a] hover:border-red-800/50 px-3 py-1.5 rounded-lg transition-colors"
                   >
                     Supprimer
@@ -305,11 +324,39 @@ function Dashboard() {
           </div>
         )}
       </div>
+      {pendingDelete && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center px-4">
+          <div className="w-full max-w-sm bg-[#111] border border-[#2a2a2a] rounded-2xl p-5 flex flex-col gap-4">
+            <div>
+              <h3 className="font-bold text-white">Confirmer la suppression</h3>
+              <p className="text-sm text-[#8a8a8a] mt-1">
+                Cette action supprimera definitivement cet element.
+              </p>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setPendingDelete(null)}
+                className="text-sm text-[#8a8a8a] hover:text-white transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                className="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-function StatCard({ label, value }: { label: string; value: string | number }) {
+function StatCard({ label, value }: Readonly<{ label: string; value: string | number }>) {
   return (
     <div className="bg-[#111] rounded-xl border border-[#2a2a2a] p-4">
       <p className="text-xs text-[#555] mb-1">{label}</p>

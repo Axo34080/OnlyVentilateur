@@ -18,7 +18,7 @@ function Sidebar() {
 
   useEffect(() => {
     if (!token) { setUnreadCount(0); return }
-    getUnreadCount(token).then(setUnreadCount).catch(() => {})
+    getUnreadCount(token).then(setUnreadCount).catch(() => setUnreadCount(0))
   }, [token])
 
   useEffect(() => {
@@ -263,14 +263,12 @@ function Sidebar() {
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-30 flex">
           <div className="w-[240px] h-full">{sidebarContent}</div>
-          <div
-            className="flex-1 bg-black/50"
-            role="button"
-            tabIndex={0}
+          <button
+            type="button"
+            className="flex-1 bg-black/50 border-0"
             aria-label="Fermer le menu"
             onClick={() => setMobileOpen(false)}
-            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setMobileOpen(false) }}
-          />
+          ></button>
         </div>
       )}
     </>

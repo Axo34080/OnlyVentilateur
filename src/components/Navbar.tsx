@@ -15,7 +15,7 @@ function Navbar() {
 
   useEffect(() => {
     if (!token) { setUnreadCount(0); return }
-    getUnreadCount(token).then(setUnreadCount).catch(() => {})
+    getUnreadCount(token).then(setUnreadCount).catch(() => setUnreadCount(0))
   }, [token])
 
   useEffect(() => {
@@ -24,7 +24,7 @@ function Navbar() {
 
   useEffect(() => {
     if (!token) { setUnreadMessages(0); return }
-    getUnreadMessagesCount(token).then(setUnreadMessages).catch(() => {})
+    getUnreadMessagesCount(token).then(setUnreadMessages).catch(() => setUnreadMessages(0))
   }, [token])
 
   useEffect(() => {
@@ -133,6 +133,7 @@ function Navbar() {
                 <span className="text-sm font-medium text-white">{user.username}</span>
               </NavLink>
               <button
+                type="button"
                 onClick={logout}
                 className="text-sm text-[#8a8a8a] hover:text-white px-2 py-1 rounded-lg hover:bg-[#1a1a1a] transition-colors"
               >

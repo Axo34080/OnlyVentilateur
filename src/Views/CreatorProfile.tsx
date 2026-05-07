@@ -1,4 +1,4 @@
-import { useState } from "react"
+﻿import { useState } from "react"
 import { useParams, Navigate, Link } from "react-router-dom"
 import { useCreatorProfileViewModel } from "../ViewModels/useCreatorProfileViewModel"
 import PostCard from "../components/PostCard"
@@ -41,6 +41,9 @@ function ProfileButtons({
     )
   }
 
+  const subscribeLabelWhenLoaded = isSubscribed ? "Arrêter le souffle" : `Rejoindre les Souffleurs — ${creator.subscriptionPrice.toFixed(2)} €/mois`
+  const subscribeLabel = isCheckingSubscription ? "..." : subscribeLabelWhenLoaded
+
   return (
     <>
       <div className="flex gap-2">
@@ -53,7 +56,7 @@ function ProfileButtons({
               : "bg-[#00AFF0] text-white hover:bg-[#0099CC]"
           }`}
         >
-          {isCheckingSubscription ? "..." : isSubscribed ? "Arrêter le souffle" : `Rejoindre les Souffleurs — ${creator.subscriptionPrice.toFixed(2)} €/mois`}
+          {subscribeLabel}
         </button>
         {creatorUserId && (
           <Link

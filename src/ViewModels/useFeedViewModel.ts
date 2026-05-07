@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+﻿import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useAuth } from "../context/AuthContext"
+import { useToast } from "../context/ToastContext"
 import { getLikedPostIds } from "../services/creatorsService"
 import { getPosts } from "../services/postService"
 import { getUserSubscriptions } from "../services/subscriptionService"
@@ -7,14 +8,10 @@ import type { Post } from "../types/Post"
 import type { Creator } from "../types/Creator"
 
 /**
- * PRÉSENTATION — useFeedViewModel (pattern MVVM)
+ * Presentation: useFeedViewModel (pattern MVVM)
  *
- * Ce custom hook contient TOUTE la logique du fil d'actualité :
+ * Ce custom hook contient toute la logique du fil d'actualite :
  * chargement des posts, filtres, infinite scroll, likes.
- * La vue Feed.tsx ne contient que du JSX — zéro logique métier.
- *
- * Concepts illustrés : useState, useEffect, useCallback, useMemo,
- * Intersection Observer, mises à jour optimistes avec rollback.
  */
 const POSTS_PER_BATCH = 9
 
@@ -37,6 +34,7 @@ interface FeedViewModel {
 
 export function useFeedViewModel(): FeedViewModel {
   const { token } = useAuth()
+  const { showToast } = useToast()
   const [posts, setPosts] = useState<Post[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isFetchingMore, setIsFetchingMore] = useState(false)
@@ -44,22 +42,22 @@ export function useFeedViewModel(): FeedViewModel {
   const [displayedCount, setDisplayedCount] = useState(POSTS_PER_BATCH)
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set())
   const [subscribedCreatorIds, setSubscribedCreatorIds] = useState<Set<string>>(new Set())
-  const [filter, setFilterState] = useState<FeedFilter>('nouveautes')
+  const [filter, setFilter] = useState<FeedFilter>('nouveautes')
   const creatorsMap = useRef<Map<string, Creator>>(new Map())
 
   useEffect(() => {
     if (!token) return
     getLikedPostIds(token)
       .then((ids) => setLikedPostIds(new Set(ids)))
-      .catch(() => {})
-  }, [token])
+      .catch(() => showToast("Impossible de charger tes likes.", "error"))
+  }, [token, showToast])
 
   useEffect(() => {
     if (!token) return
     getUserSubscriptions(token)
       .then((ids) => setSubscribedCreatorIds(new Set(ids)))
-      .catch(() => {})
-  }, [token])
+      .catch(() => showToast("Impossible de charger tes abonnements.", "error"))
+  }, [token, showToast])
 
   useEffect(() => {
     getPosts(token)
@@ -70,16 +68,16 @@ export function useFeedViewModel(): FeedViewModel {
         )
         setPosts(sorted)
       })
-      .catch(() => setError("Une erreur est survenue lors du chargement. Réessaie dans quelques instants."))
+      .catch(() => setError("Une erreur est survenue lors du chargement. RÃ©essaie dans quelques instants."))
       .finally(() => setIsLoading(false))
   }, [token])
 
-  const setFilter = useCallback((newFilter: FeedFilter) => {
-    setFilterState(newFilter)
+  const handleSetFilter = useCallback((newFilter: FeedFilter) => {
+    setFilter(newFilter)
     setDisplayedCount(POSTS_PER_BATCH)
-  }, [])
+  }, [setFilter])
 
-  // useMemo : recalcule uniquement si posts ou filter changent (pas à chaque render)
+  // Recalcule uniquement si posts ou filter changent.
   const filteredPosts = useMemo(
     () => filter === 'abonnements'
       ? posts.filter((p) => subscribedCreatorIds.has(p.creatorId))
@@ -93,16 +91,16 @@ export function useFeedViewModel(): FeedViewModel {
   const loadMore = useCallback(() => {
     if (!hasMore || isFetchingMore) return
     setIsFetchingMore(true)
-    // Simule un délai minimal pour éviter un flash brutal
+    // Simule un delai minimal pour eviter un flash brutal.
     setTimeout(() => {
       setDisplayedCount((prev) => prev + POSTS_PER_BATCH)
       setIsFetchingMore(false)
     }, 300)
   }, [hasMore, isFetchingMore])
 
-  const getCreator = (creatorId: string) => creatorsMap.current.get(creatorId)
+  const getCreator = useCallback((creatorId: string) => creatorsMap.current.get(creatorId), [])
 
-  const applyLikeResult = (postId: string, result: { likes: number; isLiked: boolean }) => {
+  const applyLikeResult = useCallback((postId: string, result: { likes: number; isLiked: boolean }) => {
     setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, likes: result.likes } : p)))
     setLikedPostIds((prev) => {
       const next = new Set(prev)
@@ -110,9 +108,9 @@ export function useFeedViewModel(): FeedViewModel {
       else next.delete(postId)
       return next
     })
-  }
+  }, [])
 
-  const revertLike = (postId: string, wasLiked: boolean) => {
+  const revertLike = useCallback((postId: string, wasLiked: boolean) => {
     setPosts((prev) =>
       prev.map((p) =>
         p.id === postId ? { ...p, likes: wasLiked ? p.likes + 1 : Math.max(0, p.likes - 1) } : p
@@ -124,23 +122,20 @@ export function useFeedViewModel(): FeedViewModel {
       else next.delete(postId)
       return next
     })
-  }
+  }, [])
 
   /**
-   * PRÉSENTATION — Mise à jour optimiste (Optimistic UI)
-   *
-   * 1. On met à jour l'UI immédiatement (sans attendre le serveur) → réactivité
-   * 2. On envoie la requête en arrière-plan
-   * 3. Si la requête échoue → on revient à l'état précédent (rollback)
-   *
-   * L'utilisateur ne ressent aucune latence, mais l'état reste cohérent.
+   * Mise a jour optimiste :
+   * 1. Mise a jour immediate de l'UI.
+   * 2. Requete API en arriere-plan.
+   * 3. Rollback si la requete echoue.
    */
-  const handleLike = (postId: string) => {
+  const handleLike = useCallback((postId: string) => {
     if (!token) return
 
     const wasLiked = likedPostIds.has(postId)
 
-    // Étape 1 : mise à jour immédiate de l'UI
+    // Etape 1 : mise a jour immediate de l'UI.
     setPosts((prev) =>
       prev.map((p) =>
         p.id === postId ? { ...p, likes: wasLiked ? Math.max(0, p.likes - 1) : p.likes + 1 } : p
@@ -153,7 +148,7 @@ export function useFeedViewModel(): FeedViewModel {
       return next
     })
 
-    // Étape 2 : requête API en arrière-plan
+    // Etape 2 : requete API en arriere-plan.
     fetch(`/api/posts/${postId}/like`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
@@ -163,11 +158,14 @@ export function useFeedViewModel(): FeedViewModel {
         return res.json()
       })
       .then((result: { likes: number; isLiked: boolean }) => applyLikeResult(postId, result))
-      .catch(() => revertLike(postId, wasLiked)) // Étape 3 : rollback si erreur
-  }
+      .catch(() => {
+        revertLike(postId, wasLiked)
+        showToast("Impossible de mettre a jour le like.", "error")
+      })
+  }, [applyLikeResult, likedPostIds, revertLike, showToast, token])
 
-  const isPostLiked = (postId: string) => likedPostIds.has(postId)
-  const isCreatorSubscribed = (creatorId: string) => subscribedCreatorIds.has(creatorId)
+  const isPostLiked = useCallback((postId: string) => likedPostIds.has(postId), [likedPostIds])
+  const isCreatorSubscribed = useCallback((creatorId: string) => subscribedCreatorIds.has(creatorId), [subscribedCreatorIds])
 
-  return { visiblePosts, getCreator, handleLike, isPostLiked, isCreatorSubscribed, isLoading, isFetchingMore, hasMore, loadMore, error, filter, setFilter }
+  return { visiblePosts, getCreator, handleLike, isPostLiked, isCreatorSubscribed, isLoading, isFetchingMore, hasMore, loadMore, error, filter, setFilter: handleSetFilter }
 }

@@ -103,9 +103,9 @@ export function useDashboardViewModel(): DashboardViewModel {
     setGoodiesLoading(true)
     getGoodies(user.creatorId)
       .then(setGoodies)
-      .catch(() => {})
+      .catch(() => showToast("Impossible de charger les goodies.", "error"))
       .finally(() => setGoodiesLoading(false))
-  }, [token, user?.creatorId])
+  }, [token, user?.creatorId, showToast])
 
   const handleDeletePost = async (id: string) => {
     if (!token) return
@@ -125,7 +125,7 @@ export function useDashboardViewModel(): DashboardViewModel {
       const url = await uploadFile(file, token)
       setGoodieForm((prev) => ({ ...prev, image: url }))
     } catch {
-      // silently fail
+      showToast("Erreur lors du tÃ©lÃ©versement de l'image", "error")
     } finally {
       setIsUploadingGoodieImage(false)
     }
@@ -162,6 +162,11 @@ export function useDashboardViewModel(): DashboardViewModel {
 
   const handleSaveGoodie = async () => {
     if (!token) return
+    const price = Number.parseFloat(goodieForm.price)
+    if (Number.isNaN(price)) {
+      showToast("Prix du goodie invalide", "error")
+      return
+    }
     setIsSavingGoodie(true)
     try {
       const parsedVariants = goodieForm.variants
@@ -171,7 +176,7 @@ export function useDashboardViewModel(): DashboardViewModel {
       const data = {
         name: goodieForm.name,
         description: goodieForm.description || undefined,
-        price: Number.parseFloat(goodieForm.price),
+        price,
         image: goodieForm.image,
         inStock: goodieForm.inStock,
         variants: parsedVariants.length > 0 ? parsedVariants : undefined,

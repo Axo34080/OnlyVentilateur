@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { Link, Navigate, useParams, useSearchParams } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 import { getCreatorById } from "../services/creatorsService"
-import { createSubscriptionCheckout } from "../services/checkoutService"
+import { createSubscriptionCheckout, redirectToStripeCheckout } from "../services/checkoutService"
 import { subscribe } from "../services/subscriptionService"
 import type { Creator } from "../types/Creator"
 
@@ -52,9 +52,7 @@ function Subscribe() {
     setError(null)
     try {
       const url = await createSubscriptionCheckout(creatorId, token)
-      const parsed = new URL(url)
-      if (parsed.origin !== "https://checkout.stripe.com") throw new Error("URL de paiement invalide")
-      globalThis.location.href = `https://checkout.stripe.com${parsed.pathname}${parsed.search}`
+      redirectToStripeCheckout(url)
     } catch {
       setError("Erreur lors du paiement. Reessaie.")
       setIsCheckingOut(false)
@@ -164,6 +162,7 @@ function Subscribe() {
           )}
 
           <button
+            type="button"
             onClick={handleConfirm}
             disabled={isCheckingOut}
             className="w-full bg-[#00AFF0] hover:bg-[#0099CC] disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors"

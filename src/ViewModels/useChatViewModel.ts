@@ -18,24 +18,29 @@ export function useChatViewModel(otherUserId: string) {
   const locationState = location.state as { username?: string; avatar?: string | null } | null
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [text, setText] = useState('')
   const [fileProgress, setFileProgress] = useState<number | null>(null)
+  const [fileError, setFileError] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   // Load history
   useEffect(() => {
     if (!token) return
     setIsLoading(true)
+    setError(null)
     getHistory(token, otherUserId)
       .then(setMessages)
-      .catch(() => null)
+      .catch(() => setError("Impossible de charger la conversation."))
       .finally(() => setIsLoading(false))
   }, [token, otherUserId])
 
   // Marque la conversation comme lue et remet le badge à 0 (via ChatContext)
   useEffect(() => {
     if (!token || !otherUserId) return
-    markConversationAsRead(token, otherUserId).catch(() => null)
+    markConversationAsRead(token, otherUserId).catch(() => {
+      setError("Impossible de marquer la conversation comme lue.")
+    })
     resetUnread()
   }, [token, otherUserId, resetUnread])
 
@@ -44,17 +49,15 @@ export function useChatViewModel(otherUserId: string) {
     if (!token) return
     connectSocket(token)
 
-    const unsubMsg = onNewMessage((msg) => {
+    const handleIncomingMessage = (msg: Message) => {
       if (
         (msg.senderId === otherUserId && msg.receiverId === user?.id) ||
         (msg.senderId === user?.id && msg.receiverId === otherUserId)
       ) {
-        setMessages((prev) => {
-          const exists = prev.some((m) => m.id === msg.id)
-          return exists ? prev : [...prev, msg]
-        })
+        setMessages((prev) => prev.some((m) => m.id === msg.id) ? prev : [...prev, msg])
       }
-    })
+    }
+    const unsubMsg = onNewMessage(handleIncomingMessage)
 
     return () => {
       unsubMsg()
@@ -76,10 +79,13 @@ export function useChatViewModel(otherUserId: string) {
     async (file: File) => {
       if (!token) return
       setFileProgress(10)
+      setFileError(null)
       try {
         const url = await uploadFile(file, token)
         setFileProgress(100)
         socketSendMessage(otherUserId, url, 'file', file.name)
+      } catch {
+        setFileError("Impossible d'envoyer le fichier.")
       } finally {
         setFileProgress(null)
       }
@@ -90,11 +96,13 @@ export function useChatViewModel(otherUserId: string) {
   return {
     messages,
     isLoading,
+    error,
     text,
     setText,
     sendText,
     sendFile,
     fileProgress,
+    fileError,
     bottomRef,
     currentUserId: user?.id ?? '',
     otherUsername: locationState?.username ?? null,

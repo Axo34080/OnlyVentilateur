@@ -11,11 +11,13 @@ function Chat() {
   const {
     messages,
     isLoading,
+    error,
     text,
     setText,
     sendText,
     sendFile,
     fileProgress,
+    fileError,
     bottomRef,
     currentUserId,
     otherUsername,
@@ -31,6 +33,12 @@ function Chat() {
     }
   }
 
+  const avatarNode = otherAvatar
+    ? <img src={otherAvatar} alt={otherUsername ?? ''} className="w-8 h-8 rounded-full object-cover" />
+    : otherUsername
+      ? <div className="w-8 h-8 rounded-full bg-[#00AFF0]/10 flex items-center justify-center text-xs font-bold text-[#00AFF0]">{otherUsername.charAt(0).toUpperCase()}</div>
+      : null
+
   return (
     <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-80px)]">
       {/* Header */}
@@ -43,13 +51,7 @@ function Chat() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
           </svg>
         </button>
-        {otherAvatar ? (
-          <img src={otherAvatar} alt={otherUsername ?? ''} className="w-8 h-8 rounded-full object-cover" />
-        ) : otherUsername ? (
-          <div className="w-8 h-8 rounded-full bg-[#00AFF0]/10 flex items-center justify-center text-xs font-bold text-[#00AFF0]">
-            {otherUsername.charAt(0).toUpperCase()}
-          </div>
-        ) : null}
+        {avatarNode}
         <span className="font-semibold text-white flex-1">
           {otherUsername ? `@${otherUsername}` : 'Conversation'}
         </span>
@@ -68,17 +70,22 @@ function Chat() {
       <div className="flex-1 overflow-y-auto py-4 flex flex-col gap-2">
         {isLoading && (
           <div className="flex flex-col gap-2 px-4">
-            {[...Array(5)].map((_, i) => (
+            {[...new Array(5)].map((_, i) => (
               <div
-                key={i}
+                key={`skeleton-${i}`}
                 className={`h-10 rounded-2xl bg-[#1a1a1a] animate-pulse ${i % 2 === 0 ? 'w-2/3' : 'w-1/2 self-end'}`}
               />
             ))}
           </div>
         )}
+        {error && (
+          <p className="px-4 text-sm text-red-400 text-center">{error}</p>
+        )}
 
         {messages.map((msg) => {
           const isMine = msg.senderId === currentUserId
+          const isImageFile = msg.type === 'file' && msg.content && /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(msg.fileName ?? '')
+          const isVideoFile = msg.type === 'file' && msg.content && /\.(mp4|webm|ogg|mov)$/i.test(msg.fileName ?? '')
           return (
             <div
               key={msg.id}
@@ -92,22 +99,29 @@ function Chat() {
                 }`}
               >
                 {msg.type === 'file' && msg.content ? (
-                  /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(msg.fileName ?? '') ? (
-                    <img
-                      src={msg.content}
-                      alt={msg.fileName ?? ''}
-                      className="max-w-[220px] rounded-lg cursor-pointer"
+                  isImageFile ? (
+                    <button
+                      type="button"
+                      className="p-0 border-0 bg-transparent"
                       onClick={(e) => e.stopPropagation()}
                       onKeyDown={(e) => e.stopPropagation()}
-                    />
-                  ) : /\.(mp4|webm|ogg|mov)$/i.test(msg.fileName ?? '') ? (
+                    >
+                      <img
+                        src={msg.content}
+                        alt={msg.fileName ?? ''}
+                        className="max-w-[220px] rounded-lg cursor-pointer"
+                      />
+                    </button>
+                  ) : isVideoFile ? (
                     <video
                       src={msg.content}
                       controls
                       className="max-w-[220px] rounded-lg"
                       onClick={(e) => e.stopPropagation()}
                       onKeyDown={(e) => e.stopPropagation()}
-                    />
+                    >
+                      <track kind="captions" />
+                    </video>
                   ) : (
                     <a
                       href={msg.content}
@@ -143,6 +157,9 @@ function Chat() {
           <p className="text-xs text-[#8a8a8a] mt-1 text-center">Envoi du fichier... {fileProgress}%</p>
         </div>
       )}
+      {fileError && (
+        <p className="px-4 pb-2 text-xs text-red-400 text-center">{fileError}</p>
+      )}
 
       {/* Input */}
       <div className="flex items-end gap-2 pt-3 border-t border-[#2a2a2a]">
@@ -175,6 +192,7 @@ function Chat() {
           className="input-of resize-none text-sm py-2.5 rounded-2xl flex-1"
         />
         <button
+          type="button"
           onClick={sendText}
           disabled={!text.trim()}
           className="bg-[#00AFF0] hover:bg-[#0099CC] disabled:opacity-40 text-white px-4 py-2.5 rounded-2xl text-sm font-semibold transition-colors"

@@ -29,7 +29,7 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   // Initialise le compteur depuis l'API au login
   useEffect(() => {
     if (!token) { setUnreadMessages(0); return }
-    getUnreadMessagesCount(token).then(setUnreadMessages).catch(() => {})
+    getUnreadMessagesCount(token).then(setUnreadMessages).catch(() => setUnreadMessages(0))
   }, [token])
 
   // Écoute les nouveaux messages via le socket (une seule fois, ici)
@@ -39,7 +39,8 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
     const socket = connectSocket(token)
 
     const handleNewMessage = () => {
-      if (!window.location.pathname.startsWith('/messages')) {
+      const currentPath = globalThis.location?.pathname ?? ''
+      if (!currentPath.startsWith('/messages')) {
         setUnreadMessages((prev) => prev + 1)
       }
     }

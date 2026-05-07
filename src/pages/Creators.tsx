@@ -6,12 +6,13 @@ import type { Creator } from "../types/Creator"
 function Creators() {
   const [creators, setCreators] = useState<Creator[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState("")
 
   useEffect(() => {
     getCreators()
       .then(setCreators)
-      .catch(() => {})
+      .catch(() => setError("Impossible de charger les Ventilateurs."))
       .finally(() => setIsLoading(false))
   }, [])
 
@@ -21,15 +22,18 @@ function Creators() {
       c.username.toLowerCase().includes(search.toLowerCase())
   )
 
+  const pluralS = filtered.length > 1 ? "s" : ""
+  const creatorCountLabel = isLoading
+    ? "Chargement..."
+    : `${filtered.length} Ventilateur${pluralS} disponible${pluralS}`
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold text-white">Tous les Ventilateurs</h1>
           <p className="text-[#8a8a8a] mt-1">
-            {isLoading
-              ? "Chargement..."
-              : `${filtered.length} Ventilateur${filtered.length > 1 ? "s" : ""} disponible${filtered.length > 1 ? "s" : ""}`}
+            {creatorCountLabel}
           </p>
         </div>
         <input
@@ -42,15 +46,18 @@ function Creators() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {isLoading ? (
-          Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a] h-64 animate-pulse" />
-          ))
-        ) : filtered.length === 0 ? (
-          <p className="text-[#8a8a8a] text-sm col-span-3">Aucun Ventilateur trouvé pour "{search}"</p>
-        ) : (
-          filtered.map((creator) => <CreatorCard key={creator.id} creator={creator} />)
+        {isLoading && Array.from({ length: 6 }, (_, i) => `creator-sk-${i}`).map((key) => (
+          <div key={key} className="bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a] h-64 animate-pulse" />
+        ))}
+        {!isLoading && error && (
+          <p className="text-red-400 text-sm col-span-3">{error}</p>
         )}
+        {!isLoading && !error && filtered.length === 0 && (
+          <p className="text-[#8a8a8a] text-sm col-span-3">Aucun Ventilateur trouvé pour "{search}"</p>
+        )}
+        {!isLoading && !error && filtered.length > 0 && filtered.map((creator) => (
+          <CreatorCard key={creator.id} creator={creator} />
+        ))}
       </div>
     </div>
   )

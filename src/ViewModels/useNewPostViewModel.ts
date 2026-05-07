@@ -61,7 +61,7 @@ export function useNewPostViewModel(): NewPostViewModel {
           })
         }
       })
-      .catch(() => {})
+      .catch(() => setError("Impossible de charger le post Ã  modifier."))
   }, [id, isEditing, token])
 
   const handleChange = (field: keyof PostForm, value: string | boolean) => {
@@ -92,12 +92,18 @@ export function useNewPostViewModel(): NewPostViewModel {
       return
     }
 
+    const price = form.isLocked && form.price ? Number.parseFloat(form.price) : undefined
+    if (price !== undefined && Number.isNaN(price)) {
+      setError("Prix invalide")
+      return
+    }
+
     const dto = {
       title: form.title.trim(),
       description: form.description.trim(),
       image: form.image.trim(),
       isLocked: form.isLocked,
-      price: form.isLocked && form.price ? Number.parseFloat(form.price) : undefined,
+      price,
       tags: form.tags
         .split(",")
         .map((t) => t.trim())

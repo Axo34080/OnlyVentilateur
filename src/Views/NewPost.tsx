@@ -7,6 +7,9 @@ function NewPost() {
   const navigate = useNavigate()
   const imageInputRef = useRef<HTMLInputElement>(null)
 
+  const editOrCreateLabel = isEditing ? "Mettre à jour le courant" : "Lancer la rafale"
+  const submitLabel = isSubmitting ? "Mise en souffle..." : editOrCreateLabel
+
   return (
     <div className="max-w-2xl mx-auto flex flex-col gap-6">
       <div className="flex items-center gap-3">
@@ -159,11 +162,7 @@ function NewPost() {
             disabled={isSubmitting || isUploadingImage}
             className="flex-1 bg-[#00AFF0] hover:bg-[#0099CC] disabled:opacity-50 text-white font-semibold py-3 rounded-lg transition-colors"
           >
-            {isSubmitting
-              ? "Mise en souffle..."
-              : isEditing
-              ? "Mettre à jour le courant"
-              : "Lancer la rafale"}
+            {submitLabel}
           </button>
           <button
             onClick={() => navigate("/dashboard")}

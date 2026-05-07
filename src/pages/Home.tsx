@@ -38,11 +38,12 @@ const pitchCards = [
 function Home() {
   const { isAuthenticated } = useAuth()
   const [featuredCreators, setFeaturedCreators] = useState<Creator[]>([])
+  const [featuredError, setFeaturedError] = useState<string | null>(null)
 
   useEffect(() => {
     getCreators()
       .then((all) => setFeaturedCreators(all.slice(0, 4)))
-      .catch(() => {})
+      .catch(() => setFeaturedError("Impossible de charger les Ventilateurs populaires."))
   }, [])
 
   return (
@@ -91,6 +92,9 @@ function Home() {
           </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {featuredError && (
+            <p className="text-sm text-red-400 sm:col-span-2 lg:col-span-4">{featuredError}</p>
+          )}
           {featuredCreators.map((creator) => (
             <CreatorCard key={creator.id} creator={creator} />
           ))}

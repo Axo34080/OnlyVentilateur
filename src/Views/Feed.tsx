@@ -62,8 +62,8 @@ function Feed() {
 
       {!error && isLoading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={`skeleton-${i}`} className="bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a] h-64 animate-pulse" />
+          {Array.from({ length: 6 }, (_, i) => `feed-sk-${i}`).map((key) => (
+            <div key={key} className="bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a] h-64 animate-pulse" />
           ))}
         </div>
       )}
@@ -116,8 +116,8 @@ function Feed() {
 
           {isFetchingMore && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={`skeleton-${i}`} className="bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a] h-64 animate-pulse" />
+              {Array.from({ length: 3 }, (_, i) => `feed-more-sk-${i}`).map((key) => (
+                <div key={key} className="bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a] h-64 animate-pulse" />
               ))}
             </div>
           )}

@@ -4,6 +4,21 @@ interface CartItemWithQty extends GoodieItem {
   quantity: number
 }
 
+const STRIPE_CHECKOUT_ORIGIN = "https://checkout.stripe.com"
+
+function parseStripeCheckoutUrl(url: string): URL {
+  const parsed = new URL(url)
+  if (parsed.origin !== STRIPE_CHECKOUT_ORIGIN) throw new Error("URL de paiement invalide")
+  return parsed
+}
+
+export function redirectToStripeCheckout(url: string): void {
+  const parsed = parseStripeCheckoutUrl(url)
+  const browserLocation = globalThis.location
+  if (!browserLocation) throw new Error("Redirection indisponible")
+  browserLocation.assign(`${STRIPE_CHECKOUT_ORIGIN}${parsed.pathname}${parsed.search}`)
+}
+
 export async function createSubscriptionCheckout(creatorId: string, token: string): Promise<string> {
   const res = await fetch("/api/checkout/subscription", {
     method: "POST",
@@ -15,8 +30,7 @@ export async function createSubscriptionCheckout(creatorId: string, token: strin
   })
   if (!res.ok) throw new Error("Impossible de créer la session de paiement")
   const data = await res.json() as { url: string }
-  const parsed = new URL(data.url)
-  if (parsed.origin !== "https://checkout.stripe.com") throw new Error("URL de paiement invalide")
+  parseStripeCheckoutUrl(data.url)
   return data.url
 }
 
@@ -37,7 +51,6 @@ export async function createOrderCheckout(items: CartItemWithQty[], token: strin
   })
   if (!res.ok) throw new Error("Impossible de créer la session de paiement")
   const data = await res.json() as { url: string }
-  const parsedOrder = new URL(data.url)
-  if (parsedOrder.origin !== "https://checkout.stripe.com") throw new Error("URL de paiement invalide")
+  parseStripeCheckoutUrl(data.url)
   return data.url
 }
