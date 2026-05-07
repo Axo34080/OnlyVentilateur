@@ -52,6 +52,7 @@ function Subscribe() {
     setError(null)
     try {
       const url = await createSubscriptionCheckout(creatorId, token)
+      if (new URL(url).origin !== "https://checkout.stripe.com") throw new Error("URL de paiement invalide")
       globalThis.location.href = url
     } catch {
       setError("Erreur lors du paiement. Reessaie.")

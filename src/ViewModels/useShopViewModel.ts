@@ -70,6 +70,7 @@ export function useShopViewModel(): ShopViewModel {
     setCheckoutError(null)
     try {
       const url = await createOrderCheckout(items, token)
+      if (new URL(url).origin !== "https://checkout.stripe.com") throw new Error("URL de paiement invalide")
       globalThis.location.href = url
     } catch {
       setCheckoutError("Erreur lors du paiement. Réessaie.")
