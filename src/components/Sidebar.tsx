@@ -265,7 +265,11 @@ function Sidebar() {
           <div className="w-[240px] h-full">{sidebarContent}</div>
           <div
             className="flex-1 bg-black/50"
+            role="button"
+            tabIndex={0}
+            aria-label="Fermer le menu"
             onClick={() => setMobileOpen(false)}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setMobileOpen(false) }}
           />
         </div>
       )}

@@ -98,6 +98,7 @@ function Chat() {
                       alt={msg.fileName ?? ''}
                       className="max-w-[220px] rounded-lg cursor-pointer"
                       onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
                     />
                   ) : /\.(mp4|webm|ogg|mov)$/i.test(msg.fileName ?? '') ? (
                     <video
@@ -105,6 +106,7 @@ function Chat() {
                       controls
                       className="max-w-[220px] rounded-lg"
                       onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
                     />
                   ) : (
                     <a
