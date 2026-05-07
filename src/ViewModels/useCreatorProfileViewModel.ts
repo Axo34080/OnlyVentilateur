@@ -134,6 +134,7 @@ export function useCreatorProfileViewModel(creatorId: string): CreatorProfileVie
 
   const handleLike = (postId: string) => {
     if (!token) return
+    if (!/^[a-zA-Z0-9_-]+$/.test(postId)) return
 
     const wasLiked = likedPostIds.has(postId)
 

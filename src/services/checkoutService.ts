@@ -15,6 +15,8 @@ export async function createSubscriptionCheckout(creatorId: string, token: strin
   })
   if (!res.ok) throw new Error("Impossible de créer la session de paiement")
   const data = await res.json() as { url: string }
+  const parsed = new URL(data.url)
+  if (parsed.origin !== "https://checkout.stripe.com") throw new Error("URL de paiement invalide")
   return data.url
 }
 
@@ -35,5 +37,7 @@ export async function createOrderCheckout(items: CartItemWithQty[], token: strin
   })
   if (!res.ok) throw new Error("Impossible de créer la session de paiement")
   const data = await res.json() as { url: string }
+  const parsedOrder = new URL(data.url)
+  if (parsedOrder.origin !== "https://checkout.stripe.com") throw new Error("URL de paiement invalide")
   return data.url
 }
